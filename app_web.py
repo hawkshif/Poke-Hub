@@ -158,7 +158,7 @@ HOLLOW_KNIGHT_PERSOS = [
     "Gorb", "Marmu", "Sans Yeux", "Galien",
     "L'Ancien", "Père Larve", "Mangepatte", "Faiseur de Masques",
     "Shaman Escargot", "Millibelle", "Tiso", "Chercheur de Dieux",
-    "Rodeuse Pâle", "Endeuilée Grise", "Isma", "Dryya", "Ogrim", "Hegemol",
+    "Rodeuse Pâle", "Endeuillée Grise", "Isma", "Dryya", "Ogrim", "Hegemol",
     "Reine Vespa", "Chevalier de la Ruche", "Nosk Ailé", "Mawlek Maussade",
     "Uumuu", "Chevalier Veilleur", "Flukemarm", "Vaisseau Pur", "Guerrier de l'Âme",
     "Markoth", "Xero", "Hu l'Ancien", "Radiance Véritable", "Grimm Roi des Cauchemars",
