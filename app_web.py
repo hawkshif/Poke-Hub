@@ -68,6 +68,10 @@ st.markdown("""
         border-color: rgba(250, 204, 21, 0.8); 
         box-shadow: 0 10px 25px rgba(250, 204, 21, 0.4);
     }
+    .game-card-hk:hover {
+        border-color: rgba(148, 163, 184, 0.8);
+        box-shadow: 0 10px 25px rgba(148, 163, 184, 0.4);
+    }
 
     /* Cartes éliminées */
     .game-card-eliminated {
@@ -140,6 +144,39 @@ st.markdown("""
 DOSSIER_DU_JEU = os.path.dirname(os.path.abspath(__file__))
 DOSSIER_PORTRAITS = os.path.join(DOSSIER_DU_JEU, "portraits")
 DOSSIER_PORTRAITS_ZELDA = os.path.join(DOSSIER_DU_JEU, "portraits_zelda")
+DOSSIER_PORTRAITS_HK = os.path.join(DOSSIER_DU_JEU, "portraits_hk")
+
+# --- BASE DE DONNÉES HOLLOW KNIGHT (AVEC SILKSONG !) ---
+HOLLOW_KNIGHT_PERSOS = [
+    "Le Chevalier", "Hornet", "Quirrel", "Zote", "Cornifer", "Iselda", "Sly", 
+    "Myla", "Bretta", "Lemm", "Jiji", "Salubra", "Tuk", 
+    "Le Roi Pâle", "La Dame Blanche", "Radiance", "Hollow Knight", 
+    "Maître de l'Âme", "Grimm", "Brumm", "Divine", 
+    "Cloth", "Le Chasseur", "Le Collectionneur", "La Voyante", 
+    "Dames Mantes", "Nosk", "Lurien", "Monomon", "Herrah",
+    "Mato", "Oro", "Sheo", "Seigneur Traître", "Vaisseau Corrompu", 
+    "Gorb", "Marmu", "Sans Yeux", "Galien",
+    "L'Ancien", "Père Larve", "Mangepatte", "Faiseur de Masques",
+    "Shaman Escargot", "Millibelle", "Tiso", "Chercheur de Dieux",
+    "Rodeuse Pâle", "Endeuilée Grise", "Isma", "Dryya", "Ogrim", "Hegemol",
+    "Reine Vespa", "Chevalier de la Ruche", "Nosk Ailé", "Mawlek Maussade",
+    "Uumuu", "Chevalier Veilleur", "Flukemarm", "Vaisseau Pur", "Guerrier de l'Âme",
+    "Markoth", "Xero", "Hu l'Ancien", "Radiance Véritable", "Grimm Roi des Cauchemars",
+    "Emilitia", "Bardoon", "Revek", "Mère Gruz", "Mouche Vengeresse Royale",
+    "Fabricant d'Aiguillons", "Sage Femme", "Dompteur de Dieux", "Gardien de Cristal",
+    "Tyran de l'Âme", "Nymm", "Jinn", "Protecteur Blanc", "Fluke Ermite",
+    "Creige", "Fille de la Forge", "Frey", "Grindle", "Jubilana", "Kratt", "Lumble", "Mort", "Mottled Skarr", 
+    "Pebb", "Plinney", "Scrounge", "Skynx", "Tipp et Pill", "Douzième Architecte", "Cardinius", "Vog", 
+    "Garmond et Zaza", "Gilly", "Prince Vert", "Grishkin", "Pilby", "Seconde Sentinelle", "Sherma", "Seth", 
+    "Varga", "Zylotol", "Caretaker", "Crull et Benjin", "Mooshka", "Greyroot", "Chasseresse", "Mergwin", 
+    "Monsieur Champignon", "Druide Moussu", "Nuu", "Maîtresse de la Pique", "Runt", "Sprintmaster Swift", 
+    "Couturière", "Zi", "Trobbio", "Trobbio Tourmenté", "Yarnaby", "Karmelita", "Bête des Cloches", 
+    "Dévoreur de Cloches", "Mère Nourricière", "Duo Mécanique", "Père Corbotère", "Roi Corail Kahnn", 
+    "Chef Déshonoré Lugoli", "Père de la Flamme", "Péché Originel", "Frères Précurseurs Signis et Gron", 
+    "Mère Supérieure Soie", "Volucornes", "Groal le Grand", "Gurr le Banni", "Lace", "Dernière Juge", 
+    "Ailebrume", "Mère Forestière", "Florinelle", "Cerf Pâle", "Fantôme", "Zango Plasmifié", 
+    "Volpeste Enragée", "Soeur Splinter", "Crâne Tyran", "L'Exfilé", "Gardien de la Frontière", "Veuve"
+]
 
 # --- BASE DE DONNÉES ZELDA ---
 ZELDA_DATA = {
@@ -175,11 +212,19 @@ ZELDA_DATA = {
     "Malon": {"race": "Hylien", "role": "Alliée", "jeu": "Ocarina of Time", "annee": 1998},
     "Kaepora Gaebora": {"race": "Animal", "role": "Allié", "jeu": "Ocarina of Time", "annee": 1998},
     "Twinrova": {"race": "Gerudo", "role": "Boss", "jeu": "Ocarina of Time", "annee": 1998},
+    "Igor": {"race": "Hylien", "role": "Neutre", "jeu": "Ocarina of Time", "annee": 1998},
+    "Arbre Mojo": {"race": "Divinité", "role": "Allié", "jeu": "Ocarina of Time", "annee": 1998},
+    "Jabu-Jabu": {"race": "Divinité", "role": "Neutre", "jeu": "Ocarina of Time", "annee": 1998},
     "Effroi": {"race": "Monstre", "role": "Ennemi", "jeu": "Ocarina of Time", "annee": 1998},
     "Tingle": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
     "Chuchu": {"race": "Monstre", "role": "Ennemi", "jeu": "Majora's Mask", "annee": 2000},
     "Le Vendeur de Masques": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
     "Taya": {"race": "Fée", "role": "Alliée", "jeu": "Majora's Mask", "annee": 2000},
+    "Tael": {"race": "Fée", "role": "Allié", "jeu": "Majora's Mask", "annee": 2000},
+    "Anju": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
+    "Kafei": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
+    "Cremia": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
+    "Romani": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
     "Bokoblin": {"race": "Monstre", "role": "Ennemi", "jeu": "The Wind Waker", "annee": 2002},
     "Lion Rouge": {"race": "Bateau", "role": "Allié", "jeu": "The Wind Waker", "annee": 2002},
     "Dumoria": {"race": "Korogu", "role": "Allié", "jeu": "The Wind Waker", "annee": 2002},
@@ -187,6 +232,7 @@ ZELDA_DATA = {
     "Tetra": {"race": "Hylien", "role": "Alliée", "jeu": "The Wind Waker", "annee": 2002},
     "Terry": {"race": "Hylien", "role": "Neutre", "jeu": "The Wind Waker", "annee": 2002},
     "Valoo": {"race": "Dragon", "role": "Allié", "jeu": "The Wind Waker", "annee": 2002},
+    "Daphnès Nohansen Hyrule": {"race": "Hylien", "role": "Allié", "jeu": "The Wind Waker", "annee": 2002},
     "Vaati": {"race": "Minish", "role": "Boss", "jeu": "The Minish Cap", "annee": 2004},
     "Exelo": {"race": "Minish", "role": "Allié", "jeu": "The Minish Cap", "annee": 2004},
     "Midona": {"race": "Twili", "role": "Alliée", "jeu": "Twilight Princess", "annee": 2006},
@@ -194,11 +240,18 @@ ZELDA_DATA = {
     "Iria": {"race": "Hylien", "role": "Alliée", "jeu": "Twilight Princess", "annee": 2006},
     "Machaon": {"race": "Hylien", "role": "Neutre", "jeu": "Twilight Princess", "annee": 2006},
     "Link Loup": {"race": "Animal", "role": "Héros", "jeu": "Twilight Princess", "annee": 2006},
+    "Linebeck": {"race": "Hylien", "role": "Allié", "jeu": "Phantom Hourglass", "annee": 2007},
+    "Bellum": {"race": "Démon", "role": "Boss", "jeu": "Phantom Hourglass", "annee": 2007},
+    "Traucmahr": {"race": "Locomo", "role": "Antagoniste", "jeu": "Spirit Tracks", "annee": 2009},
     "Ghirahim": {"race": "Démon", "role": "Boss", "jeu": "Skyward Sword", "annee": 2011},
     "Fay": {"race": "Esprit", "role": "Alliée", "jeu": "Skyward Sword", "annee": 2011},
     "Le Banni": {"race": "Démon", "role": "Boss", "jeu": "Skyward Sword", "annee": 2011},
     "Hergo": {"race": "Hylien", "role": "Allié", "jeu": "Skyward Sword", "annee": 2011},
     "Narisha": {"race": "Divinité", "role": "Allié", "jeu": "Skyward Sword", "annee": 2011},
+    "Yuga": {"race": "Loruléen", "role": "Boss", "jeu": "A Link Between Worlds", "annee": 2013},
+    "Lavio": {"race": "Loruléen", "role": "Allié", "jeu": "A Link Between Worlds", "annee": 2013},
+    "Princesse Hilda": {"race": "Loruléen", "role": "Alliée", "jeu": "A Link Between Worlds", "annee": 2013},
+    "Linkle": {"race": "Hylien", "role": "Alliée", "jeu": "Hyrule Warriors", "annee": 2014},
     "Mipha": {"race": "Zora", "role": "Alliée", "jeu": "Breath of the Wild", "annee": 2017},
     "Daruk": {"race": "Goron", "role": "Allié", "jeu": "Breath of the Wild", "annee": 2017},
     "Revali": {"race": "Piaf", "role": "Allié", "jeu": "Breath of the Wild", "annee": 2017},
@@ -217,35 +270,19 @@ ZELDA_DATA = {
     "Rordrac": {"race": "Dragon", "role": "Neutre", "jeu": "Breath of the Wild", "annee": 2017},
     "Ordrac": {"race": "Dragon", "role": "Neutre", "jeu": "Breath of the Wild", "annee": 2017},
     "Nedrac": {"race": "Dragon", "role": "Neutre", "jeu": "Breath of the Wild", "annee": 2017},
-    "Babil": {"race": "Piaf", "role": "Allié", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Rauru": {"race": "Soneau", "role": "Allié", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Mineru": {"race": "Soneau", "role": "Alliée", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Terrako": {"race": "Machine", "role": "Allié", "jeu": "Hyrule Warriors : L'Ère du Fléau", "annee": 2020},
-    "Daphnès Nohansen Hyrule": {"race": "Hylien", "role": "Allié", "jeu": "The Wind Waker", "annee": 2002},
-    "Linebeck": {"race": "Hylien", "role": "Allié", "jeu": "Phantom Hourglass", "annee": 2007},
-    "Bellum": {"race": "Démon", "role": "Boss", "jeu": "Phantom Hourglass", "annee": 2007},
-    "Traucmahr": {"race": "Locomo", "role": "Antagoniste", "jeu": "Spirit Tracks", "annee": 2009},
-    "Yuga": {"race": "Loruléen", "role": "Boss", "jeu": "A Link Between Worlds", "annee": 2013},
-    "Lavio": {"race": "Loruléen", "role": "Allié", "jeu": "A Link Between Worlds", "annee": 2013},
-    "Princesse Hilda": {"race": "Loruléen", "role": "Alliée", "jeu": "A Link Between Worlds", "annee": 2013},
-    "Igor": {"race": "Hylien", "role": "Neutre", "jeu": "Ocarina of Time", "annee": 1998},
-    "Arbre Mojo": {"race": "Divinité", "role": "Allié", "jeu": "Ocarina of Time", "annee": 1998},
-    "Jabu-Jabu": {"race": "Divinité", "role": "Neutre", "jeu": "Ocarina of Time", "annee": 1998},
     "Roi Dorefah": {"race": "Zora", "role": "Allié", "jeu": "Breath of the Wild", "annee": 2017},
     "Pahya": {"race": "Sheikah", "role": "Alliée", "jeu": "Breath of the Wild", "annee": 2017},
     "Patricia": {"race": "Animal", "role": "Neutre", "jeu": "Breath of the Wild", "annee": 2017},
     "Ombre de l'Eau de Ganon": {"race": "Démon", "role": "Boss", "jeu": "Breath of the Wild", "annee": 2017},
+    "Terrako": {"race": "Machine", "role": "Allié", "jeu": "Hyrule Warriors : L'Ère du Fléau", "annee": 2020},
+    "Babil": {"race": "Piaf", "role": "Allié", "jeu": "Tears of the Kingdom", "annee": 2023},
+    "Rauru": {"race": "Soneau", "role": "Allié", "jeu": "Tears of the Kingdom", "annee": 2023},
+    "Mineru": {"race": "Soneau", "role": "Alliée", "jeu": "Tears of the Kingdom", "annee": 2023},
     "Sonia": {"race": "Hylien", "role": "Alliée", "jeu": "Tears of the Kingdom", "annee": 2023},
     "Josha": {"race": "Sheikah", "role": "Alliée", "jeu": "Tears of the Kingdom", "annee": 2023},
     "Tauro": {"race": "Hylien", "role": "Allié", "jeu": "Tears of the Kingdom", "annee": 2023},
     "Golemax": {"race": "Machine", "role": "Boss", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Roi Gleeok": {"race": "Monstre", "role": "Boss", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Tael": {"race": "Fée", "role": "Allié", "jeu": "Majora's Mask", "annee": 2000},
-    "Linkle": {"race": "Hylien", "role": "Alliée", "jeu": "Hyrule Warriors", "annee": 2014},
-    "Anju": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
-    "Kafei": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
-    "Cremia": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
-    "Romani": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000}
+    "Roi Gleeok": {"race": "Monstre", "role": "Boss", "jeu": "Tears of the Kingdom", "annee": 2023}
 }
 
 # --- DICTIONNAIRES POKÉMON ---
@@ -282,14 +319,28 @@ def get_base64_image(img_path):
 def get_zelda_image(nom, size=60, center=False):
     margin_style = "margin: 0 auto 5px auto; display: block;" if center else "margin-right: 12px;"
     if os.path.exists(DOSSIER_PORTRAITS_ZELDA):
-        for ext in ['.png', '.jpg', '.jpeg', '.webp']:
+        for ext in ['.png', '.jpg', '.jpeg', '.webp', '.PNG', '.JPG', '.JPEG']:
             chemin_img = os.path.join(DOSSIER_PORTRAITS_ZELDA, f"{nom}{ext}")
             if os.path.exists(chemin_img):
                 img_base64 = get_base64_image(chemin_img)
-                return f"<img src='data:image/{ext[1:]};base64,{img_base64}' style='width:{size}px; height:{size}px; object-fit:contain; background-color:rgba(15, 23, 42, 0.8); border-radius:50%; border:2px solid #38bdf8; padding:4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); {margin_style}'>"
+                format_ext = ext.lower().replace('.', '')
+                return f"<img src='data:image/{format_ext};base64,{img_base64}' style='width:{size}px; height:{size}px; object-fit:contain; background-color:rgba(15, 23, 42, 0.8); border-radius:50%; border:2px solid #38bdf8; padding:4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); {margin_style}'>"
     nom_u = urllib.parse.quote(nom)
     avatar = f"https://ui-avatars.com/api/?name={nom_u}&background=0f172a&color=38bdf8&rounded=true&bold=true&size={size}"
     return f"<img src='{avatar}' style='width:{size}px; border-radius:50%; border:2px solid #38bdf8; box-shadow: 0 4px 10px rgba(0,0,0,0.5); {margin_style}'>"
+
+def get_hk_image(nom, size=60, center=False):
+    margin_style = "margin: 0 auto 5px auto; display: block;" if center else "margin-right: 12px;"
+    if os.path.exists(DOSSIER_PORTRAITS_HK):
+        for ext in ['.png', '.jpg', '.jpeg', '.webp', '.PNG', '.JPG', '.JPEG']:
+            chemin_img = os.path.join(DOSSIER_PORTRAITS_HK, f"{nom}{ext}")
+            if os.path.exists(chemin_img):
+                img_base64 = get_base64_image(chemin_img)
+                format_ext = ext.lower().replace('.', '')
+                return f"<img src='data:image/{format_ext};base64,{img_base64}' style='width:{size}px; height:{size}px; object-fit:contain; background-color:rgba(15, 23, 42, 0.8); border-radius:50%; border:2px solid #94a3b8; padding:4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); {margin_style}'>"
+    nom_u = urllib.parse.quote(nom)
+    avatar = f"https://ui-avatars.com/api/?name={nom_u}&background=0f172a&color=94a3b8&rounded=true&bold=true&size={size}"
+    return f"<img src='{avatar}' style='width:{size}px; border-radius:50%; border:2px solid #94a3b8; box-shadow: 0 4px 10px rgba(0,0,0,0.5); {margin_style}'>"
 
 @st.cache_data
 def charger_noms_fr():
@@ -342,7 +393,7 @@ def extraire_adn_couleurs(image_url):
     except:
         return ["#ccc", "#999", "#666", "#333", "#000"]
 
-# 1. BARRE LATÉRALE DE NAVIGATION (RÉORGANISÉE)
+# 1. BARRE LATÉRALE DE NAVIGATION
 st.sidebar.markdown("## 🔴 Poké-Hub Web")
 st.sidebar.markdown("---")
 mode_choisi = st.sidebar.radio(
@@ -359,7 +410,8 @@ mode_choisi = st.sidebar.radio(
         "🧬 Blind Starter (Labo Scanners)", 
         "🕵️‍♂️ Qui est-ce ? (Pokémon)", 
         "⚔️ Qui est-ce ? (Smash Bros)",
-        "🧝‍♂️ Qui est-ce ? (Zelda)" 
+        "🧝‍♂️ Qui est-ce ? (Zelda)",
+        "🪲 Qui est-ce ? (Hollow Knight)"
     ]
 )
 st.sidebar.markdown("---")
@@ -378,7 +430,7 @@ if mode_choisi == "🏠 Accueil":
     with col1:
         st.info("**👁️ Détecteur Sheikah (Zelda)**\n\nIdentifie le personnage ou monstre culte de la saga Zelda !")
         st.info("**🟩 Poké-Wordle**\n\nDéduis le Pokémon secret grâce aux indices de Génération, Types, Taille et Poids.")
-        st.success("**🕵️‍♂️ 3x Modes Qui est-ce ?**\n\nUn véritable jeu de société interactif avec des grilles aléatoires sur Zelda, Pokémon et Smash Bros.")
+        st.success("**🕵️‍♂️ 4x Modes Qui est-ce ?**\n\nUn véritable jeu de société interactif avec des grilles aléatoires sur Zelda, Hollow Knight, Pokémon et Smash Bros.")
     with col2:
         st.warning("**🎒 Les 6 Modes Blind Starter**\n\nDevine ton compagnon de route avec différentes mécaniques :\n* **Audio :** Reconnais son cri\n* **Pokédex :** À l'aide de son numéro national\n* **Statistiques :** Via sa meilleure stat de base\n* **Incubateur :** Selon son groupe d'œuf\n* **Zoom :** Son sprite grossi 9 fois\n* **Labo Scanners :** Analyse son ADN et sa silhouette")
 
@@ -453,8 +505,15 @@ elif mode_choisi == "👁️ Détecteur Sheikah (Zelda Wordle)":
             if essai['race'] == secret_item['race']: race_html = f"<div class='w-box w-green'>{essai['race']}</div>"
             else: race_html = f"<div class='w-box w-red'>{essai['race']}</div>"
             
-            if essai['role'] == secret_item['role']: role_html = f"<div class='w-box w-green'>{essai['role']}</div>"
-            else: role_html = f"<div class='w-box w-red'>{essai['role']}</div>"
+            # FUSION DE ALLIÉ ET ALLIÉE POUR LE VERT 🟩
+            role_essai = essai['role']
+            role_secret = secret_item['role']
+            est_allie = lambda r: r in ["Allié", "Alliée"]
+            
+            if role_essai == role_secret or (est_allie(role_essai) and est_allie(role_secret)):
+                role_html = f"<div class='w-box w-green'>{essai['role']}</div>"
+            else:
+                role_html = f"<div class='w-box w-red'>{essai['role']}</div>"
             
             if essai['jeu'] == secret_item['jeu']: jeu_html = f"<div class='w-box w-green'>{essai['jeu']}</div>"
             else: jeu_html = f"<div class='w-box w-red'>{essai['jeu']}</div>"
@@ -777,7 +836,6 @@ elif mode_choisi == "🥚 Blind Starter (Incubateur)":
                 
                 try:
                     img_oeuf = get_base64_image(os.path.join(DOSSIER_DU_JEU, "oeuf.png"))
-                    # OEUFS AGRANDIS À 120px ICI
                     egg_html = f'<img src="data:image/png;base64,{img_oeuf}" style="width: 120px; filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.3));">'
                 except:
                     egg_html = '<div style="font-size: 100px; text-align:center;">🥚</div>'
@@ -1019,9 +1077,6 @@ elif mode_choisi == "⚔️ Qui est-ce ? (Smash Bros)":
                             st.markdown(f"""<div class="game-card game-card-smash"><img src="data:image/png;base64,{img_encoded}" style="width: 90px; border-radius: 5px; margin-bottom: 5px; filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.3));"><p style="margin: 0; font-size: 13px; font-weight: bold; color: #38bdf8;">{nom_perso}</p></div>""", unsafe_allow_html=True)
                             if st.button("❌", key=f"elim_smash_{idx}", use_container_width=True): st.session_state.smash_elimines.append(fichier); st.rerun()
 
-# ==========================================
-# 🧝‍♂️ MODE : QUI EST-CE ? (ZELDA) - DÉPLACÉ EN DERNIER
-# ==========================================
 elif mode_choisi == "🧝‍♂️ Qui est-ce ? (Zelda)":
     st.title("🧝‍♂️ Le Plateau Qui est-ce ? (Zelda)")
     st.write("Un personnage ou monstre d'Hyrule a été tiré au sort. Éliminez les suspects et portez votre accusation !")
@@ -1070,3 +1125,56 @@ elif mode_choisi == "🧝‍♂️ Qui est-ce ? (Zelda)":
                 else:
                     st.markdown(f"""<div class="game-card game-card-zelda">{img_html}<p style="margin: 0; font-size: 14px; font-weight: bold; color: #facc15;">{nom_perso}</p></div>""", unsafe_allow_html=True)
                     if st.button("❌", key=f"elim_z_{idx}", use_container_width=True): st.session_state.zelda_qe_elimines.append(nom_perso); st.rerun()
+
+# ==========================================
+# 🪲 MODE : QUI EST-CE ? (HOLLOW KNIGHT)
+# ==========================================
+elif mode_choisi == "🪲 Qui est-ce ? (Hollow Knight)":
+    st.title("🪲 Le Plateau Qui est-ce ? (Hollow Knight)")
+    st.write("Un insecte d'Hallownest a été tiré au sort. Éliminez les suspects et portez votre accusation !")
+
+    if not os.path.exists(DOSSIER_PORTRAITS_HK):
+        st.info("💡 Astuce : Créez un dossier 'portraits_hk' contenant les images de vos personnages (ex: 'Hornet.png') pour remplacer les avatars !")
+
+    if "hk_qe_secret" not in st.session_state:
+        taille_grille = min(len(HOLLOW_KNIGHT_PERSOS), 24)
+        st.session_state.hk_qe_liste = random.sample(HOLLOW_KNIGHT_PERSOS, taille_grille)
+        st.session_state.hk_qe_secret = random.choice(st.session_state.hk_qe_liste)
+        st.session_state.hk_qe_elimines = []
+        st.session_state.hk_qe_gagne = False
+
+    nom_secret = st.session_state.hk_qe_secret
+
+    if st.session_state.hk_qe_gagne:
+        st.balloons()
+        st.success(f"🏆 BIEN JOUÉ ! L'insecte mystère était bien **{nom_secret}** !")
+        img_html = get_hk_image(nom_secret, size=250, center=True)
+        st.markdown(f'<div>{img_html}</div>', unsafe_allow_html=True)
+        st.write("")
+        if st.button("Recommencer une partie Hollow Knight 🔄", type="primary", use_container_width=True):
+            del st.session_state.hk_qe_secret; del st.session_state.hk_qe_liste; del st.session_state.hk_qe_elimines
+            st.session_state.hk_qe_gagne = False; st.rerun()
+    else:
+        noms_pour_selection = ["-- Qui est-ce ? --"] + sorted(st.session_state.hk_qe_liste)
+        accusation = st.selectbox("🎯 PORTER UNE ACCUSATION FINALE :", noms_pour_selection, key="acc_hk")
+        
+        if accusation != "-- Qui est-ce ? --":
+            if accusation.lower() == nom_secret.lower(): st.session_state.hk_qe_gagne = True; st.rerun()
+            else: st.error(f"❌ Ce n'est pas {accusation} ! Retentez votre chance.")
+            
+        st.divider()
+        st.subheader("📋 Votre plateau de jeu (24 suspects)")
+        with st.expander("👀 Voir le secret"): st.write(f"Personnage : **{nom_secret}**")
+        
+        cols = st.columns(4)
+        for idx, nom_perso in enumerate(st.session_state.hk_qe_liste):
+            img_html = get_hk_image(nom_perso, size=100, center=True)
+            est_elimine = nom_perso in st.session_state.hk_qe_elimines
+            
+            with cols[idx % 4]:
+                if est_elimine:
+                    st.markdown(f"""<div class="game-card-eliminated">{img_html}<p style="margin: 0; font-size: 14px; font-weight: bold; text-decoration: line-through;">{nom_perso}</p></div>""", unsafe_allow_html=True)
+                    if st.button("🔄", key=f"ret_hk_{idx}", use_container_width=True): st.session_state.hk_qe_elimines.remove(nom_perso); st.rerun()
+                else:
+                    st.markdown(f"""<div class="game-card game-card-hk">{img_html}<p style="margin: 0; font-size: 14px; font-weight: bold; color: #94a3b8;">{nom_perso}</p></div>""", unsafe_allow_html=True)
+                    if st.button("❌", key=f"elim_hk_{idx}", use_container_width=True): st.session_state.hk_qe_elimines.append(nom_perso); st.rerun()
