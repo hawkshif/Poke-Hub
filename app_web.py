@@ -146,7 +146,7 @@ DOSSIER_PORTRAITS = os.path.join(DOSSIER_DU_JEU, "portraits")
 DOSSIER_PORTRAITS_ZELDA = os.path.join(DOSSIER_DU_JEU, "portraits_zelda")
 DOSSIER_PORTRAITS_HK = os.path.join(DOSSIER_DU_JEU, "portraits_hk")
 
-# --- BASE DE DONNÉES HOLLOW KNIGHT (AVEC SILKSONG !) ---
+# --- BASE DE DONNÉES HOLLOW KNIGHT ---
 HOLLOW_KNIGHT_PERSOS = [
     "Le Chevalier", "Hornet", "Quirrel", "Zote", "Cornifer", "Iselda", "Sly", 
     "Myla", "Bretta", "Lemm", "Jiji", "Salubra", "Tuk", 
@@ -282,7 +282,54 @@ ZELDA_DATA = {
     "Josha": {"race": "Sheikah", "role": "Alliée", "jeu": "Tears of the Kingdom", "annee": 2023},
     "Tauro": {"race": "Hylien", "role": "Allié", "jeu": "Tears of the Kingdom", "annee": 2023},
     "Golemax": {"race": "Machine", "role": "Boss", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Roi Gleeok": {"race": "Monstre", "role": "Boss", "jeu": "Tears of the Kingdom", "annee": 2023}
+    "Roi Gleeok": {"race": "Monstre", "role": "Boss", "jeu": "Tears of the Kingdom", "annee": 2023},
+    "Talon": {"race": "Hylien", "role": "Neutre", "jeu": "Ocarina of Time", "annee": 1998},
+    "Ingo": {"race": "Hylien", "role": "Antagoniste", "jeu": "Ocarina of Time", "annee": 1998},
+    "Roi Zora": {"race": "Zora", "role": "Allié", "jeu": "Ocarina of Time", "annee": 1998},
+    "Mido": {"race": "Kokiri", "role": "Neutre", "jeu": "Ocarina of Time", "annee": 1998},
+    "Biggoron": {"race": "Goron", "role": "Allié", "jeu": "Ocarina of Time", "annee": 1998},
+    "Peste Mojo": {"race": "Monstre", "role": "Ennemi", "jeu": "Ocarina of Time", "annee": 1998},
+    "Bongo Bongo": {"race": "Démon", "role": "Boss", "jeu": "Ocarina of Time", "annee": 1998},
+    "Mikau": {"race": "Zora", "role": "Allié", "jeu": "Majora's Mask", "annee": 2000},
+    "Lulu": {"race": "Zora", "role": "Alliée", "jeu": "Majora's Mask", "annee": 2000},
+    "Darmani": {"race": "Goron", "role": "Allié", "jeu": "Majora's Mask", "annee": 2000},
+    "Igos du Ikana": {"race": "Stalfos", "role": "Boss", "jeu": "Majora's Mask", "annee": 2000},
+    "Gyorg": {"race": "Monstre", "role": "Boss", "jeu": "Majora's Mask", "annee": 2000},
+    "Goht": {"race": "Machine", "role": "Boss", "jeu": "Majora's Mask", "annee": 2000},
+    "Odolwa": {"race": "Démon", "role": "Boss", "jeu": "Majora's Mask", "annee": 2000},
+    "Arielle": {"race": "Hylien", "role": "Alliée", "jeu": "The Wind Waker", "annee": 2002},
+    "Fado": {"race": "Kokiri", "role": "Allié", "jeu": "The Wind Waker", "annee": 2002},
+    "Laruto": {"race": "Zora", "role": "Alliée", "jeu": "The Wind Waker", "annee": 2002},
+    "Cyclos": {"race": "Divinité", "role": "Boss", "jeu": "The Wind Waker", "annee": 2002},
+    "Zephos": {"race": "Divinité", "role": "Neutre", "jeu": "The Wind Waker", "annee": 2002},
+    "Gordon": {"race": "Machine", "role": "Boss", "jeu": "The Wind Waker", "annee": 2002},
+    "Roi Cuirasse": {"race": "Monstre", "role": "Boss", "jeu": "The Wind Waker", "annee": 2002},
+    "Salvatore": {"race": "Hylien", "role": "Neutre", "jeu": "The Wind Waker", "annee": 2002},
+    "Reynald": {"race": "Hylien", "role": "Allié", "jeu": "Twilight Princess", "annee": 2006},
+    "Telma": {"race": "Hylien", "role": "Alliée", "jeu": "Twilight Princess", "annee": 2006},
+    "Balder": {"race": "Hylien", "role": "Neutre", "jeu": "Twilight Princess", "annee": 2006},
+    "Yéti": {"race": "Yéti", "role": "Allié", "jeu": "Twilight Princess", "annee": 2006},
+    "Matornia": {"race": "Yéti", "role": "Boss", "jeu": "Twilight Princess", "annee": 2006},
+    "Octolacanthe": {"race": "Monstre", "role": "Boss", "jeu": "Twilight Princess", "annee": 2006},
+    "Magmaudit": {"race": "Goron", "role": "Boss", "jeu": "Twilight Princess", "annee": 2006},
+    "Célestrier": {"race": "Oiseau", "role": "Allié", "jeu": "Skyward Sword", "annee": 2011},
+    "Morcego": {"race": "Démon", "role": "Neutre", "jeu": "Skyward Sword", "annee": 2011},
+    "Onox": {"race": "Démon", "role": "Boss", "jeu": "Oracle of Seasons", "annee": 2001},
+    "Veran": {"race": "Ombre", "role": "Boss", "jeu": "Oracle of Ages", "annee": 2001},
+    "Arbre Bojo": {"race": "Divinité", "role": "Allié", "jeu": "Oracle of Ages", "annee": 2001},
+    "Din": {"race": "Divinité", "role": "Alliée", "jeu": "Oracle of Seasons", "annee": 2001},
+    "Nayru": {"race": "Divinité", "role": "Alliée", "jeu": "Oracle of Ages", "annee": 2001},
+    "Farore": {"race": "Divinité", "role": "Alliée", "jeu": "Oracle of Ages", "annee": 2001},
+    "Tarkin": {"race": "Humaine", "role": "Neutre", "jeu": "Link's Awakening", "annee": 1993},
+    "Toutou": {"race": "Monstre", "role": "Allié", "jeu": "Link's Awakening", "annee": 1993},
+    "Ciela": {"race": "Fée", "role": "Alliée", "jeu": "Phantom Hourglass", "annee": 2007},
+    "Siwan": {"race": "Divinité", "role": "Allié", "jeu": "Phantom Hourglass", "annee": 2007},
+    "Kimado": {"race": "Démon", "role": "Boss", "jeu": "Spirit Tracks", "annee": 2009},
+    "Koltin": {"race": "Monstre", "role": "Neutre", "jeu": "Tears of the Kingdom", "annee": 2023},
+    "Penn": {"race": "Piaf", "role": "Allié", "jeu": "Tears of the Kingdom", "annee": 2023},
+    "Grosaillieh": {"race": "Hylien", "role": "Allié", "jeu": "Breath of the Wild", "annee": 2017},
+    "Marlon": {"race": "Divinité", "role": "Alliée", "jeu": "Breath of the Wild", "annee": 2017},
+    "Meryth": {"race": "Zora", "role": "Allié", "jeu": "Breath of the Wild", "annee": 2017}
 }
 
 # --- DICTIONNAIRES POKÉMON ---
