@@ -1,0 +1,7 @@
+{
+  "pseudo_joueur": {
+    "Zelda": ["Link", "Zelda", "Moblin"],
+    "HollowKnight": ["Le Chevalier", "Hornet"],
+    "Pokemon": ["Pikachu", "Dracaufeu"]
+  }
+}

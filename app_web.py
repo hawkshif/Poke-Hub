@@ -148,7 +148,7 @@ def charger_donnees_externes():
         with open(chemin_zelda, "r", encoding="utf-8") as f:
             zelda = json.load(f)
     else:
-        zelda = {"Link": {"race": "Hylien", "role": "Héros", "jeu": "The Legend of Zelda", "annee": 1986}}
+        zelda = {"Link": {"race": "Hylien", "role": "Héros", "jeu": "The Legend of Zelda", "annee": 1986, "rarete": "Légendaire"}}
         
     # Chargement de Hollow Knight
     chemin_hk = os.path.join(DOSSIER_DU_JEU, "hk_data.json")
@@ -156,7 +156,7 @@ def charger_donnees_externes():
         with open(chemin_hk, "r", encoding="utf-8") as f:
             hk = json.load(f)
     else:
-        hk = ["Le Chevalier", "Hornet"]
+        hk = {"Le Chevalier": {"rarete": "Ultra Rare"}, "Hornet": {"rarete": "Ultra Rare"}}
         
     return zelda, hk
 
@@ -322,8 +322,11 @@ elif mode_choisi == "👁️ Détecteur Sheikah (Zelda Wordle)":
     if not os.path.exists(DOSSIER_PORTRAITS_ZELDA):
         st.info("💡 Astuce : Créez un dossier 'portraits_zelda' contenant les images de vos personnages pour remplacer les avatars !")
 
+    # Protection dictionnaire
+    tous_les_zelda = list(ZELDA_DATA.keys()) if isinstance(ZELDA_DATA, dict) else []
+
     if "z_secret_name" not in st.session_state:
-        st.session_state.z_secret_name = random.choice(list(ZELDA_DATA.keys()))
+        st.session_state.z_secret_name = random.choice(tous_les_zelda)
         st.session_state.z_essais = []
         st.session_state.z_gagne = False
         
@@ -332,7 +335,7 @@ elif mode_choisi == "👁️ Détecteur Sheikah (Zelda Wordle)":
     if not st.session_state.z_gagne:
         c_in, c_bt = st.columns([3, 1])
         with c_in:
-            guess_z = st.selectbox("Sélectionnez un personnage ou monstre :", ["-- Analyse requise --"] + sorted(list(ZELDA_DATA.keys())))
+            guess_z = st.selectbox("Sélectionnez un personnage ou monstre :", ["-- Analyse requise --"] + sorted(tous_les_zelda))
         with c_bt:
             st.write("")
             if st.button("Scanner l'Archive 🕵️‍♂️", use_container_width=True, type="primary"):
@@ -511,7 +514,7 @@ elif mode_choisi == "🟩 Poké-Wordle (Déduction)":
                 with c5: st.markdown(poids_html, unsafe_allow_html=True)
 
 # ==========================================
-# 🎒 MODE : BLIND STARTER (AUDIO / DEX / ETC.)
+# 🎒 MODE : BLIND STARTER (AUDIO)
 # ==========================================
 elif mode_choisi == "🎒 Blind Starter (Audio)":
     st.title("🎒 Choisissez votre Starter à l'aveugle !")
@@ -559,6 +562,9 @@ elif mode_choisi == "🎒 Blind Starter (Audio)":
             st.session_state.choix_audio = None
             st.rerun()
 
+# ==========================================
+# 🔢 MODE : BLIND STARTER (POKÉDEX)
+# ==========================================
 elif mode_choisi == "🔢 Blind Starter (Pokédex)":
     st.title("🔢 Registre Pokédex")
     st.write("Faites appel à votre mémoire ! Choisissez un Pokémon uniquement à partir de son numéro d'identification national.")
@@ -608,6 +614,9 @@ elif mode_choisi == "🔢 Blind Starter (Pokédex)":
             st.session_state.choix_dex = None
             st.rerun()
 
+# ==========================================
+# 📊 MODE : BLIND STARTER (STATISTIQUES)
+# ==========================================
 elif mode_choisi == "📊 Blind Starter (Meilleure Stat)":
     st.title("📊 Analyseur de Potentiel")
     st.write("Choisissez votre futur champion en vous basant uniquement sur sa statistique de base la plus élevée !")
@@ -660,6 +669,9 @@ elif mode_choisi == "📊 Blind Starter (Meilleure Stat)":
             st.session_state.choix_stat = None
             st.rerun()
 
+# ==========================================
+# 🥚 MODE : BLIND STARTER (INCUBATEUR)
+# ==========================================
 elif mode_choisi == "🥚 Blind Starter (Incubateur)":
     st.title("🥚 L'Incubateur Mystère")
     st.write("Bienvenue à la Pension Pokémon ! Choisissez un de ces 3 œufs en vous basant uniquement sur son (ou ses) groupe(s) d'œuf(s).")
@@ -715,6 +727,9 @@ elif mode_choisi == "🥚 Blind Starter (Incubateur)":
             st.session_state.choix_oeuf = None
             st.rerun()
 
+# ==========================================
+# 🔎 MODE : BLIND STARTER (ZOOM)
+# ==========================================
 elif mode_choisi == "🔎 Blind Starter (Zoom)":
     st.title("🔎 Starter au Microscope")
     st.write("Observez ces fragments de sprites zoomés à l'extrême pour deviner quel Pokémon se cache derrière !")
@@ -766,6 +781,9 @@ elif mode_choisi == "🔎 Blind Starter (Zoom)":
             st.session_state.choix_zoom = None
             st.rerun()
 
+# ==========================================
+# 🧬 MODE : BLIND STARTER (LABO SCANNERS)
+# ==========================================
 elif mode_choisi == "🧬 Blind Starter (Labo Scanners)":
     st.title("🔬 Fichiers isolés. Testez les scanners.")
     st.write("Le laboratoire a censuré les images. Utilisez les trois outils d'analyse ci-dessous pour identifier et choisir votre Pokémon.")
@@ -828,14 +846,14 @@ elif mode_choisi == "🧬 Blind Starter (Labo Scanners)":
             st.rerun()
 
 # ==========================================
-# 🕵️‍♂️ MODES : QUI EST-CE ? (4 LICENCES)
+# 🕵️‍♂️ MODES : QUI EST-CE ? (POKEMON & SMASH BROS)
 # ==========================================
 elif mode_choisi == "🕵️‍♂️ Qui est-ce ? (Pokémon)":
     st.title("🕵️‍♂️ Le Plateau Qui est-ce ? (Pokémon)")
-    st.write("Un Pokémon secret a été tiré au sort parmi les 9 générations (1025 Pokémon). Éliminez les suspects et portez votre accusation !")
-
+    st.write("Un Pokémon secret a été tiré au sort parmi les 9 générations. Éliminez les suspects et portez votre accusation !")
+    
     if "pokemon_secret" not in st.session_state:
-        with st.spinner("🔮 Invocation de 24 Pokémon aléatoires (1G à 9G)..."):
+        with st.spinner("🔮 Invocation de 24 Pokémon aléatoires..."):
             ids_aleatoires = random.sample(range(1, 1026), 35)
             with ThreadPoolExecutor(max_workers=15) as executor: resultats = list(executor.map(charger_un_pokemon, ids_aleatoires))
             liste_24 = [p for p in resultats if p is not None][:24]
@@ -851,106 +869,99 @@ elif mode_choisi == "🕵️‍♂️ Qui est-ce ? (Pokémon)":
         st.balloons(); st.success(f"🏆 BIEN JOUÉ ! Le Pokémon mystère était bien **{nom_secret}** !")
         if secret_poke: st.markdown(f'<div style="text-align: center;"><img src="{secret_poke["image"]}" style="width: 200px; filter: drop-shadow(0px 10px 15px rgba(16, 185, 129, 0.4));"></div>', unsafe_allow_html=True)
         st.write("")
-        if st.button("Recommencer une partie Pokémon 🔄", type="primary", use_container_width=True):
-            del st.session_state.pokemon_secret; del st.session_state.pokemon_liste; del st.session_state.pokemon_elimines
-            st.session_state.pokemon_gagne = False; st.rerun()
+        if st.button("Recommencer une partie Pokémon 🔄", type="primary"):
+            del st.session_state.pokemon_secret; st.rerun()
     else:
         noms_pour_selection = ["-- Qui est-ce ? --"] + [p["nom"] for p in st.session_state.pokemon_liste]
-        accusation_poke = st.selectbox("🎯 PORTER UNE ACCUSATION FINALE :", noms_pour_selection, key="acc_poke")
+        accusation_poke = st.selectbox("🎯 PORTER UNE ACCUSATION FINALE :", noms_pour_selection)
         if accusation_poke != "-- Qui est-ce ? --":
             if accusation_poke.lower() == nom_secret.lower(): st.session_state.pokemon_gagne = True; st.rerun()
-            else: st.error(f"❌ Ce n'est pas {accusation_poke} ! Poursuivez vos recherches.")
-        st.divider(); st.subheader("📋 Votre plateau de jeu (24 Pokémon)")
+            else: st.error(f"❌ Ce n'est pas {accusation_poke} !")
+            
+        st.divider()
         with st.expander("👀 Voir le secret"): st.write(f"Pokémon : **{nom_secret}**")
         cols = st.columns(4)
         for idx, p in enumerate(st.session_state.pokemon_liste):
             est_elimine = p["nom"] in st.session_state.pokemon_elimines
             with cols[idx % 4]:
                 if est_elimine:
-                    st.markdown(f"""<div class="game-card-eliminated"><img src="{p["image"]}" style="width: 90px; margin-bottom: 5px;"><p style="margin: 0; font-size: 13px; font-weight: bold; text-decoration: line-through;">{p["nom"]}</p></div>""", unsafe_allow_html=True)
-                    if st.button("🔄", key=f"ret_poke_{idx}", use_container_width=True): st.session_state.pokemon_elimines.remove(p["nom"]); st.rerun()
+                    st.markdown(f"""<div class="game-card-eliminated"><img src="{p["image"]}" width="90"><p>{p["nom"]}</p></div>""", unsafe_allow_html=True)
+                    if st.button("🔄", key=f"ret_{idx}"): st.session_state.pokemon_elimines.remove(p["nom"]); st.rerun()
                 else:
-                    st.markdown(f"""<div class="game-card"><img src="{p["image"]}" style="width: 90px; margin-bottom: 5px; filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.3));"><p style="margin: 0; font-size: 13px; font-weight: bold; color: #ff4b4b;">{p["nom"]}</p></div>""", unsafe_allow_html=True)
-                    if st.button("❌", key=f"elim_poke_{idx}", use_container_width=True): st.session_state.pokemon_elimines.append(p["nom"]); st.rerun()
+                    st.markdown(f"""<div class="game-card"><img src="{p["image"]}" width="90"><p style="color: #ff4b4b;">{p["nom"]}</p></div>""", unsafe_allow_html=True)
+                    if st.button("❌", key=f"elim_{idx}"): st.session_state.pokemon_elimines.append(p["nom"]); st.rerun()
 
 elif mode_choisi == "⚔️ Qui est-ce ? (Smash Bros)":
     st.title("⚔️ Le Plateau Qui est-ce ? (Smash Bros)")
-    st.write("Un personnage secret a été tiré au sort. Éliminez les suspects et portez votre accusation !")
+    if os.path.exists(DOSSIER_PORTRAITS):
+        tous_les_persos = [f for f in os.listdir(DOSSIER_PORTRAITS) if f.endswith(('.png', '.jpg'))]
+        if "smash_secret" not in st.session_state:
+            st.session_state.smash_liste = random.sample(tous_les_persos, min(len(tous_les_persos), 24))
+            st.session_state.smash_secret = random.choice(st.session_state.smash_liste)
+            st.session_state.smash_elimines = []
+            st.session_state.smash_gagne = False
 
-    if not os.path.exists(DOSSIER_PORTRAITS):
-        st.error(f"📁 Dossier introuvable ! Il devrait être ici : {DOSSIER_PORTRAITS}")
-    else:
-        tous_les_persos = [f for f in os.listdir(DOSSIER_PORTRAITS) if f.endswith(('.png', '.jpg', '.jpeg'))]
-        if len(tous_les_persos) == 0: st.warning("⚠️ Le dossier 'portraits' est vide !")
+        nom_secret = os.path.splitext(st.session_state.smash_secret)[0]
+        
+        if st.session_state.smash_gagne:
+            st.balloons(); st.success(f"🏆 BIEN JOUÉ ! Le personnage mystère était bien **{nom_secret}** !")
+            img_encoded = get_base64_image(os.path.join(DOSSIER_PORTRAITS, st.session_state.smash_secret))
+            st.markdown(f'<div style="text-align: center;"><img src="data:image/png;base64,{img_encoded}" style="width: 250px; filter: drop-shadow(0px 10px 15px rgba(56, 189, 248, 0.4));"></div>', unsafe_allow_html=True)
+            st.write("")
+            if st.button("Recommencer une partie Smash 🔄", type="primary", use_container_width=True):
+                del st.session_state.smash_secret; del st.session_state.smash_liste; del st.session_state.smash_elimines
+                st.session_state.smash_gagne = False; st.rerun()
         else:
-            if "smash_secret" not in st.session_state:
-                taille_grille = min(len(tous_les_persos), 24)
-                st.session_state.smash_liste = random.sample(tous_les_persos, taille_grille)
-                st.session_state.smash_secret = random.choice(st.session_state.smash_liste)
-                st.session_state.smash_elimines = []
-                st.session_state.smash_gagne = False
+            noms_pour_selection = ["-- Qui est-ce ? --"] + sorted([os.path.splitext(f)[0] for f in st.session_state.smash_liste])
+            accusation = st.selectbox("🎯 PORTER UNE ACCUSATION FINALE :", noms_pour_selection, key="acc_smash")
+            if accusation != "-- Qui est-ce ? --":
+                if accusation.lower() == nom_secret.lower(): st.session_state.smash_gagne = True; st.rerun()
+                else: st.error(f"❌ Ce n'est pas {accusation} ! Retentez votre chance.")
+            st.divider(); st.subheader("📋 Votre plateau de jeu (24 personnages)")
+            with st.expander("👀 Voir le secret"): st.write(f"Personnage : **{nom_secret}**")
+            cols = st.columns(4)
+            for idx, fichier in enumerate(st.session_state.smash_liste):
+                nom_perso = os.path.splitext(fichier)[0]
+                img_encoded = get_base64_image(os.path.join(DOSSIER_PORTRAITS, fichier))
+                est_elimine = fichier in st.session_state.smash_elimines
+                with cols[idx % 4]:
+                    if est_elimine:
+                        st.markdown(f"""<div class="game-card-eliminated"><img src="data:image/png;base64,{img_encoded}" style="width: 90px; border-radius: 5px; margin-bottom: 5px;"><p style="margin: 0; font-size: 13px; font-weight: bold; text-decoration: line-through;">{nom_perso}</p></div>""", unsafe_allow_html=True)
+                        if st.button("🔄", key=f"ret_smash_{idx}", use_container_width=True): st.session_state.smash_elimines.remove(fichier); st.rerun()
+                    else:
+                        st.markdown(f"""<div class="game-card game-card-smash"><img src="data:image/png;base64,{img_encoded}" style="width: 90px; border-radius: 5px; margin-bottom: 5px; filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.3));"><p style="margin: 0; font-size: 13px; font-weight: bold; color: #38bdf8;">{nom_perso}</p></div>""", unsafe_allow_html=True)
+                        if st.button("❌", key=f"elim_smash_{idx}", use_container_width=True): st.session_state.smash_elimines.append(fichier); st.rerun()
+    else:
+        st.warning("Dossier portraits introuvable.")
 
-            secret_file = st.session_state.smash_secret
-            nom_secret = os.path.splitext(secret_file)[0]
-
-            if st.session_state.smash_gagne:
-                st.balloons(); st.success(f"🏆 BIEN JOUÉ ! Le personnage mystère était bien **{nom_secret}** !")
-                img_encoded = get_base64_image(os.path.join(DOSSIER_PORTRAITS, secret_file))
-                st.markdown(f'<div style="text-align: center;"><img src="data:image/png;base64,{img_encoded}" style="width: 250px; filter: drop-shadow(0px 10px 15px rgba(56, 189, 248, 0.4));"></div>', unsafe_allow_html=True)
-                st.write("")
-                if st.button("Recommencer une partie Smash 🔄", type="primary", use_container_width=True):
-                    del st.session_state.smash_secret; del st.session_state.smash_liste; del st.session_state.smash_elimines
-                    st.session_state.smash_gagne = False; st.rerun()
-            else:
-                noms_pour_selection = ["-- Qui est-ce ? --"] + sorted([os.path.splitext(f)[0] for f in st.session_state.smash_liste])
-                accusation = st.selectbox("🎯 PORTER UNE ACCUSATION FINALE :", noms_pour_selection, key="acc_smash")
-                if accusation != "-- Qui est-ce ? --":
-                    if accusation.lower() == nom_secret.lower(): st.session_state.smash_gagne = True; st.rerun()
-                    else: st.error(f"❌ Ce n'est pas {accusation} ! Retentez votre chance.")
-                st.divider(); st.subheader("📋 Votre plateau de jeu (24 personnages)")
-                with st.expander("👀 Voir le secret"): st.write(f"Personnage : **{nom_secret}**")
-                cols = st.columns(4)
-                for idx, fichier in enumerate(st.session_state.smash_liste):
-                    nom_perso = os.path.splitext(fichier)[0]
-                    img_encoded = get_base64_image(os.path.join(DOSSIER_PORTRAITS, fichier))
-                    est_elimine = fichier in st.session_state.smash_elimines
-                    with cols[idx % 4]:
-                        if est_elimine:
-                            st.markdown(f"""<div class="game-card-eliminated"><img src="data:image/png;base64,{img_encoded}" style="width: 90px; border-radius: 5px; margin-bottom: 5px;"><p style="margin: 0; font-size: 13px; font-weight: bold; text-decoration: line-through;">{nom_perso}</p></div>""", unsafe_allow_html=True)
-                            if st.button("🔄", key=f"ret_smash_{idx}", use_container_width=True): st.session_state.smash_elimines.remove(fichier); st.rerun()
-                        else:
-                            st.markdown(f"""<div class="game-card game-card-smash"><img src="data:image/png;base64,{img_encoded}" style="width: 90px; border-radius: 5px; margin-bottom: 5px; filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.3));"><p style="margin: 0; font-size: 13px; font-weight: bold; color: #38bdf8;">{nom_perso}</p></div>""", unsafe_allow_html=True)
-                            if st.button("❌", key=f"elim_smash_{idx}", use_container_width=True): st.session_state.smash_elimines.append(fichier); st.rerun()
-
+# ==========================================
+# 🧝‍♂️ MODE : QUI EST-CE ? (ZELDA)
+# ==========================================
 elif mode_choisi == "🧝‍♂️ Qui est-ce ? (Zelda)":
     st.title("🧝‍♂️ Le Plateau Qui est-ce ? (Zelda)")
-    st.write("Un personnage ou monstre d'Hyrule a été tiré au sort. Éliminez les suspects et portez votre accusation !")
-
-    tous_les_persos_zelda = list(ZELDA_DATA.keys())
+    tous_les_persos_zelda = list(ZELDA_DATA.keys()) if isinstance(ZELDA_DATA, dict) else []
+    
     if "zelda_qe_secret" not in st.session_state:
-        taille_grille = min(len(tous_les_persos_zelda), 24)
-        st.session_state.zelda_qe_liste = random.sample(tous_les_persos_zelda, taille_grille)
+        st.session_state.zelda_qe_liste = random.sample(tous_les_persos_zelda, min(len(tous_les_persos_zelda), 24))
         st.session_state.zelda_qe_secret = random.choice(st.session_state.zelda_qe_liste)
         st.session_state.zelda_qe_elimines = []
         st.session_state.zelda_qe_gagne = False
 
     nom_secret = st.session_state.zelda_qe_secret
-
     if st.session_state.zelda_qe_gagne:
         st.balloons(); st.success(f"🏆 BIEN JOUÉ ! L'entité mystère était bien **{nom_secret}** !")
         img_html = get_zelda_image(nom_secret, size=250, center=True)
         st.markdown(f'<div>{img_html}</div>', unsafe_allow_html=True)
         st.write("")
-        if st.button("Recommencer une partie Zelda 🔄", type="primary", use_container_width=True):
-            del st.session_state.zelda_qe_secret; del st.session_state.zelda_qe_liste; del st.session_state.zelda_qe_elimines
-            st.session_state.zelda_qe_gagne = False; st.rerun()
+        if st.button("Recommencer une partie Zelda 🔄", type="primary"): del st.session_state.zelda_qe_secret; st.rerun()
     else:
         noms_pour_selection = ["-- Qui est-ce ? --"] + sorted(st.session_state.zelda_qe_liste)
-        accusation = st.selectbox("🎯 PORTER UNE ACCUSATION FINALE :", noms_pour_selection, key="acc_zelda")
+        accusation = st.selectbox("🎯 PORTER UNE ACCUSATION FINALE :", noms_pour_selection)
         if accusation != "-- Qui est-ce ? --":
             if accusation.lower() == nom_secret.lower(): st.session_state.zelda_qe_gagne = True; st.rerun()
-            else: st.error(f"❌ Ce n'est pas {accusation} ! Retentez votre chance.")
-        st.divider(); st.subheader("📋 Votre plateau de jeu (24 suspects)")
+            else: st.error(f"❌ Ce n'est pas {accusation} !")
+            
+        st.divider()
         with st.expander("👀 Voir le secret"): st.write(f"Personnage : **{nom_secret}**")
         cols = st.columns(4)
         for idx, nom_perso in enumerate(st.session_state.zelda_qe_liste):
@@ -958,12 +969,15 @@ elif mode_choisi == "🧝‍♂️ Qui est-ce ? (Zelda)":
             est_elimine = nom_perso in st.session_state.zelda_qe_elimines
             with cols[idx % 4]:
                 if est_elimine:
-                    st.markdown(f"""<div class="game-card-eliminated">{img_html}<p style="margin: 0; font-size: 14px; font-weight: bold; text-decoration: line-through;">{nom_perso}</p></div>""", unsafe_allow_html=True)
-                    if st.button("🔄", key=f"ret_z_{idx}", use_container_width=True): st.session_state.zelda_qe_elimines.remove(nom_perso); st.rerun()
+                    st.markdown(f"<div class='game-card-eliminated'>{img_html}<p style='text-decoration: line-through;'>{nom_perso}</p></div>", unsafe_allow_html=True)
+                    if st.button("🔄", key=f"rz_{idx}"): st.session_state.zelda_qe_elimines.remove(nom_perso); st.rerun()
                 else:
-                    st.markdown(f"""<div class="game-card game-card-zelda">{img_html}<p style="margin: 0; font-size: 14px; font-weight: bold; color: #facc15;">{nom_perso}</p></div>""", unsafe_allow_html=True)
-                    if st.button("❌", key=f"elim_z_{idx}", use_container_width=True): st.session_state.zelda_qe_elimines.append(nom_perso); st.rerun()
+                    st.markdown(f"<div class='game-card game-card-zelda'>{img_html}<p style='color: #facc15;'>{nom_perso}</p></div>", unsafe_allow_html=True)
+                    if st.button("❌", key=f"ez_{idx}"): st.session_state.zelda_qe_elimines.append(nom_perso); st.rerun()
 
+# ==========================================
+# 🪲 MODE : QUI EST-CE ? (HOLLOW KNIGHT)
+# ==========================================
 elif mode_choisi == "🪲 Qui est-ce ? (Hollow Knight)":
     st.title("🪲 Le Plateau Qui est-ce ? (Hollow Knight)")
     st.write("Un insecte d'Hallownest ou de Pharloom a été tiré au sort. Éliminez les suspects et portez votre accusation !")
@@ -971,9 +985,18 @@ elif mode_choisi == "🪲 Qui est-ce ? (Hollow Knight)":
     if not os.path.exists(DOSSIER_PORTRAITS_HK):
         st.info("💡 Astuce : Créez un dossier 'portraits_hk' contenant les images de vos personnages pour remplacer les avatars !")
 
+    # Sécurité pour transformer le dictionnaire en liste de noms
+    if isinstance(HOLLOW_KNIGHT_PERSOS, dict):
+        tous_les_hk = list(HOLLOW_KNIGHT_PERSOS.keys())
+    elif isinstance(HOLLOW_KNIGHT_PERSOS, list):
+        st.warning("⚠️ Attention: Votre fichier hk_data.json est toujours détecté comme une liste et non un dictionnaire. Les raretés ne seront pas disponibles.")
+        tous_les_hk = HOLLOW_KNIGHT_PERSOS
+    else:
+        tous_les_hk = ["Le Chevalier", "Hornet"]
+        
     if "hk_qe_secret" not in st.session_state:
-        taille_grille = min(len(HOLLOW_KNIGHT_PERSOS), 24)
-        st.session_state.hk_qe_liste = random.sample(HOLLOW_KNIGHT_PERSOS, taille_grille)
+        taille_grille = min(len(tous_les_hk), 24)
+        st.session_state.hk_qe_liste = random.sample(tous_les_hk, taille_grille)
         st.session_state.hk_qe_secret = random.choice(st.session_state.hk_qe_liste)
         st.session_state.hk_qe_elimines = []
         st.session_state.hk_qe_gagne = False
