@@ -3,6 +3,7 @@ import requests
 import random
 import os
 import base64
+import json
 from io import BytesIO
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
@@ -16,18 +17,15 @@ st.set_page_config(page_title="Poké-Hub Web", page_icon="🎮", layout="wide")
 # ==========================================
 st.markdown("""
 <style>
-    /* Masquer les éléments par défaut de Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Fond global du site - Dégradé radial nuit/arcade */
     .stApp {
         background: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 100%) !important;
         color: #f8fafc;
     }
 
-    /* Animation de l'oeuf */
     @keyframes pulse-egg {
         0% { transform: scale(1) translateY(0px); }
         50% { transform: scale(1.05) translateY(-5px); }
@@ -40,7 +38,6 @@ st.markdown("""
         filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.4));
     }
 
-    /* Cartes de jeu avec effet Glassmorphism (Verre) */
     .game-card {
         background: rgba(30, 41, 59, 0.5);
         backdrop-filter: blur(10px);
@@ -54,7 +51,6 @@ st.markdown("""
         margin-bottom: 15px;
     }
     
-    /* Effets de survol Néon par univers */
     .game-card:hover {
         transform: translateY(-7px) scale(1.02);
         border-color: rgba(255, 75, 75, 0.8);
@@ -73,7 +69,6 @@ st.markdown("""
         box-shadow: 0 10px 25px rgba(148, 163, 184, 0.4);
     }
 
-    /* Cartes éliminées */
     .game-card-eliminated {
         background: rgba(15, 23, 42, 0.4);
         border-radius: 16px;
@@ -86,7 +81,6 @@ st.markdown("""
         transition: all 0.3s ease;
     }
     
-    /* Style des boutons personnalisés */
     div.stButton > button {
         border-radius: 12px;
         font-weight: 600;
@@ -98,7 +92,6 @@ st.markdown("""
         box-shadow: 0px 5px 20px rgba(255, 255, 255, 0.15);
     }
     
-    /* Microscope */
     .microscope-lens {
         width: 140px; height: 140px; 
         overflow: hidden; 
@@ -110,7 +103,6 @@ st.markdown("""
         box-shadow: inset 0px 0px 20px rgba(0,0,0,0.9), 0px 10px 20px rgba(0,0,0,0.5);
     }
     
-    /* ADN Scanners */
     .adn-container {
         display: flex; height: 130px; width: 100%; 
         border: 1px solid rgba(255,255,255,0.1);
@@ -127,7 +119,6 @@ st.markdown("""
         letter-spacing: 2px;
     }
 
-    /* Grille Wordle */
     .w-box {
         padding: 10px; border-radius: 8px; text-align: center;
         font-weight: 700; color: white; margin-bottom: 6px; font-size: 14px;
@@ -146,191 +137,30 @@ DOSSIER_PORTRAITS = os.path.join(DOSSIER_DU_JEU, "portraits")
 DOSSIER_PORTRAITS_ZELDA = os.path.join(DOSSIER_DU_JEU, "portraits_zelda")
 DOSSIER_PORTRAITS_HK = os.path.join(DOSSIER_DU_JEU, "portraits_hk")
 
-# --- BASE DE DONNÉES HOLLOW KNIGHT ---
-HOLLOW_KNIGHT_PERSOS = [
-    "Le Chevalier", "Hornet", "Quirrel", "Zote", "Cornifer", "Iselda", "Sly", 
-    "Myla", "Bretta", "Lemm", "Jiji", "Salubra", "Tuk", 
-    "Le Roi Pâle", "La Dame Blanche", "Radiance", "Hollow Knight", 
-    "Maître de l'Âme", "Grimm", "Brumm", "Divine", 
-    "Cloth", "Le Chasseur", "Le Collectionneur", "La Voyante", 
-    "Dames Mantes", "Nosk", "Lurien", "Monomon", "Herrah",
-    "Mato", "Oro", "Sheo", "Seigneur Traître", "Vaisseau Corrompu", 
-    "Gorb", "Marmu", "Sans Yeux", "Galien",
-    "L'Ancien", "Père Larve", "Mangepatte", "Faiseur de Masques",
-    "Shaman Escargot", "Millibelle", "Tiso", "Chercheur de Dieux",
-    "Rodeuse Pâle", "Endeuillée Grise", "Isma", "Dryya", "Ogrim", "Hegemol",
-    "Reine Vespa", "Chevalier de la Ruche", "Nosk Ailé", "Mawlek Maussade",
-    "Uumuu", "Chevalier Veilleur", "Flukemarm", "Vaisseau Pur", "Guerrier de l'Âme",
-    "Markoth", "Xero", "Hu l'Ancien", "Radiance Véritable", "Grimm Roi des Cauchemars",
-    "Emilitia", "Bardoon", "Revek", "Mère Gruz", "Mouche Vengeresse Royale",
-    "Fabricant d'Aiguillons", "Sage Femme", "Dompteur de Dieux", "Gardien de Cristal",
-    "Tyran de l'Âme", "Nymm", "Jinn", "Protecteur Blanc", "Fluke Ermite",
-    "Creige", "Fille de la Forge", "Frey", "Grindle", "Jubilana", "Kratt", "Lumble", "Mort", "Mottled Skarr", 
-    "Pebb", "Plinney", "Scrounge", "Skynx", "Tipp et Pill", "Douzième Architecte", "Cardinius", "Vog", 
-    "Garmond et Zaza", "Gilly", "Prince Vert", "Grishkin", "Pilby", "Seconde Sentinelle", "Sherma", "Seth", 
-    "Varga", "Zylotol", "Caretaker", "Crull et Benjin", "Mooshka", "Greyroot", "Chasseresse", "Mergwin", 
-    "Monsieur Champignon", "Druide Moussu", "Nuu", "Maîtresse de la Pique", "Runt", "Sprintmaster Swift", 
-    "Couturière", "Zi", "Trobbio", "Trobbio Tourmenté", "Yarnaby", "Karmelita", "Bête des Cloches", 
-    "Dévoreur de Cloches", "Mère Nourricière", "Duo Mécanique", "Père Corbotère", "Roi Corail Kahnn", 
-    "Chef Déshonoré Lugoli", "Père de la Flamme", "Péché Originel", "Frères Précurseurs Signis et Gron", 
-    "Mère Supérieure Soie", "Volucornes", "Groal le Grand", "Gurr le Banni", "Lace", "Dernière Juge", 
-    "Ailebrume", "Mère Forestière", "Florinelle", "Cerf Pâle", "Fantôme", "Zango Plasmifié", 
-    "Volpeste Enragée", "Soeur Splinter", "Crâne Tyran", "L'Exfilé", "Gardien de la Frontière", "Veuve"
-]
+# ==========================================
+# 📦 ASPIRATION DES BASES DE DONNÉES JSON
+# ==========================================
+@st.cache_data
+def charger_donnees_externes():
+    # Chargement de Zelda
+    chemin_zelda = os.path.join(DOSSIER_DU_JEU, "zelda_data.json")
+    if os.path.exists(chemin_zelda):
+        with open(chemin_zelda, "r", encoding="utf-8") as f:
+            zelda = json.load(f)
+    else:
+        zelda = {"Link": {"race": "Hylien", "role": "Héros", "jeu": "The Legend of Zelda", "annee": 1986}}
+        
+    # Chargement de Hollow Knight
+    chemin_hk = os.path.join(DOSSIER_DU_JEU, "hk_data.json")
+    if os.path.exists(chemin_hk):
+        with open(chemin_hk, "r", encoding="utf-8") as f:
+            hk = json.load(f)
+    else:
+        hk = ["Le Chevalier", "Hornet"]
+        
+    return zelda, hk
 
-# --- BASE DE DONNÉES ZELDA ---
-ZELDA_DATA = {
-    "Link": {"race": "Hylien", "role": "Héros", "jeu": "The Legend of Zelda", "annee": 1986},
-    "Zelda": {"race": "Hylien", "role": "Alliée", "jeu": "The Legend of Zelda", "annee": 1986},
-    "Ganon": {"race": "Démon", "role": "Boss", "jeu": "The Legend of Zelda", "annee": 1986},
-    "Impa": {"race": "Sheikah", "role": "Alliée", "jeu": "The Legend of Zelda", "annee": 1986},
-    "Le Vieil Homme": {"race": "Hylien", "role": "Allié", "jeu": "The Legend of Zelda", "annee": 1986},
-    "Moblin": {"race": "Monstre", "role": "Ennemi", "jeu": "The Legend of Zelda", "annee": 1986},
-    "Octorok": {"race": "Monstre", "role": "Ennemi", "jeu": "The Legend of Zelda", "annee": 1986},
-    "Lynel": {"race": "Monstre", "role": "Ennemi", "jeu": "The Legend of Zelda", "annee": 1986},
-    "Gohma": {"race": "Monstre", "role": "Boss", "jeu": "The Legend of Zelda", "annee": 1986},
-    "Gleeok": {"race": "Monstre", "role": "Boss", "jeu": "The Legend of Zelda", "annee": 1986},
-    "Like Like": {"race": "Monstre", "role": "Ennemi", "jeu": "The Legend of Zelda", "annee": 1986},
-    "Dark Link": {"race": "Ombre", "role": "Boss", "jeu": "The Adventure of Link", "annee": 1987},
-    "Lézalfos": {"race": "Monstre", "role": "Ennemi", "jeu": "The Adventure of Link", "annee": 1987},
-    "Aghanim": {"race": "Sorcier", "role": "Boss", "jeu": "A Link to the Past", "annee": 1991},
-    "Hinox": {"race": "Monstre", "role": "Ennemi", "jeu": "A Link to the Past", "annee": 1991},
-    "Sahasrahla": {"race": "Hylien", "role": "Allié", "jeu": "A Link to the Past", "annee": 1991},
-    "Poule (Cocotte)": {"race": "Animal", "role": "Neutre", "jeu": "A Link to the Past", "annee": 1991},
-    "Marine": {"race": "Humaine", "role": "Alliée", "jeu": "Link's Awakening", "annee": 1993},
-    "Poisson-Rêve": {"race": "Divinité", "role": "Neutre", "jeu": "Link's Awakening", "annee": 1993},
-    "Ganondorf": {"race": "Gerudo", "role": "Boss", "jeu": "Ocarina of Time", "annee": 1998},
-    "Navi": {"race": "Fée", "role": "Alliée", "jeu": "Ocarina of Time", "annee": 1998},
-    "Epona": {"race": "Animal", "role": "Alliée", "jeu": "Ocarina of Time", "annee": 1998},
-    "Skull Kid": {"race": "Stalfos", "role": "Antagoniste", "jeu": "Ocarina of Time", "annee": 1998},
-    "Volcania": {"race": "Dragon", "role": "Boss", "jeu": "Ocarina of Time", "annee": 1998},
-    "Saria": {"race": "Kokiri", "role": "Alliée", "jeu": "Ocarina of Time", "annee": 1998},
-    "Darunia": {"race": "Goron", "role": "Allié", "jeu": "Ocarina of Time", "annee": 1998},
-    "Ruto": {"race": "Zora", "role": "Alliée", "jeu": "Ocarina of Time", "annee": 1998},
-    "Nabooru": {"race": "Gerudo", "role": "Alliée", "jeu": "Ocarina of Time", "annee": 1998},
-    "Sheik": {"race": "Sheikah", "role": "Allié", "jeu": "Ocarina of Time", "annee": 1998},
-    "Malon": {"race": "Hylien", "role": "Alliée", "jeu": "Ocarina of Time", "annee": 1998},
-    "Kaepora Gaebora": {"race": "Animal", "role": "Allié", "jeu": "Ocarina of Time", "annee": 1998},
-    "Twinrova": {"race": "Gerudo", "role": "Boss", "jeu": "Ocarina of Time", "annee": 1998},
-    "Igor": {"race": "Hylien", "role": "Neutre", "jeu": "Ocarina of Time", "annee": 1998},
-    "Arbre Mojo": {"race": "Divinité", "role": "Allié", "jeu": "Ocarina of Time", "annee": 1998},
-    "Jabu-Jabu": {"race": "Divinité", "role": "Neutre", "jeu": "Ocarina of Time", "annee": 1998},
-    "Effroi": {"race": "Monstre", "role": "Ennemi", "jeu": "Ocarina of Time", "annee": 1998},
-    "Tingle": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
-    "Chuchu": {"race": "Monstre", "role": "Ennemi", "jeu": "Majora's Mask", "annee": 2000},
-    "Le Vendeur de Masques": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
-    "Taya": {"race": "Fée", "role": "Alliée", "jeu": "Majora's Mask", "annee": 2000},
-    "Tael": {"race": "Fée", "role": "Allié", "jeu": "Majora's Mask", "annee": 2000},
-    "Anju": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
-    "Kafei": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
-    "Cremia": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
-    "Romani": {"race": "Hylien", "role": "Neutre", "jeu": "Majora's Mask", "annee": 2000},
-    "Bokoblin": {"race": "Monstre", "role": "Ennemi", "jeu": "The Wind Waker", "annee": 2002},
-    "Lion Rouge": {"race": "Bateau", "role": "Allié", "jeu": "The Wind Waker", "annee": 2002},
-    "Dumoria": {"race": "Korogu", "role": "Allié", "jeu": "The Wind Waker", "annee": 2002},
-    "Médolie": {"race": "Piaf", "role": "Alliée", "jeu": "The Wind Waker", "annee": 2002},
-    "Tetra": {"race": "Hylien", "role": "Alliée", "jeu": "The Wind Waker", "annee": 2002},
-    "Terry": {"race": "Hylien", "role": "Neutre", "jeu": "The Wind Waker", "annee": 2002},
-    "Valoo": {"race": "Dragon", "role": "Allié", "jeu": "The Wind Waker", "annee": 2002},
-    "Daphnès Nohansen Hyrule": {"race": "Hylien", "role": "Allié", "jeu": "The Wind Waker", "annee": 2002},
-    "Vaati": {"race": "Minish", "role": "Boss", "jeu": "The Minish Cap", "annee": 2004},
-    "Exelo": {"race": "Minish", "role": "Allié", "jeu": "The Minish Cap", "annee": 2004},
-    "Midona": {"race": "Twili", "role": "Alliée", "jeu": "Twilight Princess", "annee": 2006},
-    "Xanto": {"race": "Twili", "role": "Boss", "jeu": "Twilight Princess", "annee": 2006},
-    "Iria": {"race": "Hylien", "role": "Alliée", "jeu": "Twilight Princess", "annee": 2006},
-    "Machaon": {"race": "Hylien", "role": "Neutre", "jeu": "Twilight Princess", "annee": 2006},
-    "Link Loup": {"race": "Animal", "role": "Héros", "jeu": "Twilight Princess", "annee": 2006},
-    "Linebeck": {"race": "Hylien", "role": "Allié", "jeu": "Phantom Hourglass", "annee": 2007},
-    "Bellum": {"race": "Démon", "role": "Boss", "jeu": "Phantom Hourglass", "annee": 2007},
-    "Traucmahr": {"race": "Locomo", "role": "Antagoniste", "jeu": "Spirit Tracks", "annee": 2009},
-    "Ghirahim": {"race": "Démon", "role": "Boss", "jeu": "Skyward Sword", "annee": 2011},
-    "Fay": {"race": "Esprit", "role": "Alliée", "jeu": "Skyward Sword", "annee": 2011},
-    "Le Banni": {"race": "Démon", "role": "Boss", "jeu": "Skyward Sword", "annee": 2011},
-    "Hergo": {"race": "Hylien", "role": "Allié", "jeu": "Skyward Sword", "annee": 2011},
-    "Narisha": {"race": "Divinité", "role": "Allié", "jeu": "Skyward Sword", "annee": 2011},
-    "Yuga": {"race": "Loruléen", "role": "Boss", "jeu": "A Link Between Worlds", "annee": 2013},
-    "Lavio": {"race": "Loruléen", "role": "Allié", "jeu": "A Link Between Worlds", "annee": 2013},
-    "Princesse Hilda": {"race": "Loruléen", "role": "Alliée", "jeu": "A Link Between Worlds", "annee": 2013},
-    "Linkle": {"race": "Hylien", "role": "Alliée", "jeu": "Hyrule Warriors", "annee": 2014},
-    "Mipha": {"race": "Zora", "role": "Alliée", "jeu": "Breath of the Wild", "annee": 2017},
-    "Daruk": {"race": "Goron", "role": "Allié", "jeu": "Breath of the Wild", "annee": 2017},
-    "Revali": {"race": "Piaf", "role": "Allié", "jeu": "Breath of the Wild", "annee": 2017},
-    "Urbosa": {"race": "Gerudo", "role": "Alliée", "jeu": "Breath of the Wild", "annee": 2017},
-    "Sidon": {"race": "Zora", "role": "Allié", "jeu": "Breath of the Wild", "annee": 2017},
-    "Riju": {"race": "Gerudo", "role": "Alliée", "jeu": "Breath of the Wild", "annee": 2017},
-    "Yunobo": {"race": "Goron", "role": "Allié", "jeu": "Breath of the Wild", "annee": 2017},
-    "Gardien": {"race": "Machine", "role": "Ennemi", "jeu": "Breath of the Wild", "annee": 2017},
-    "Pru'ha": {"race": "Sheikah", "role": "Alliée", "jeu": "Breath of the Wild", "annee": 2017},
-    "Noïa": {"race": "Korogu", "role": "Neutre", "jeu": "Breath of the Wild", "annee": 2017},
-    "Le Grand Kohga": {"race": "Sheikah", "role": "Boss", "jeu": "Breath of the Wild", "annee": 2017},
-    "Asarim": {"race": "Piaf", "role": "Neutre", "jeu": "Breath of the Wild", "annee": 2017},
-    "Faras": {"race": "Sheikah", "role": "Allié", "jeu": "Breath of the Wild", "annee": 2017},
-    "Kilton": {"race": "Monstre", "role": "Neutre", "jeu": "Breath of the Wild", "annee": 2017},
-    "Teba": {"race": "Piaf", "role": "Allié", "jeu": "Breath of the Wild", "annee": 2017},
-    "Rordrac": {"race": "Dragon", "role": "Neutre", "jeu": "Breath of the Wild", "annee": 2017},
-    "Ordrac": {"race": "Dragon", "role": "Neutre", "jeu": "Breath of the Wild", "annee": 2017},
-    "Nedrac": {"race": "Dragon", "role": "Neutre", "jeu": "Breath of the Wild", "annee": 2017},
-    "Roi Dorefah": {"race": "Zora", "role": "Allié", "jeu": "Breath of the Wild", "annee": 2017},
-    "Pahya": {"race": "Sheikah", "role": "Alliée", "jeu": "Breath of the Wild", "annee": 2017},
-    "Patricia": {"race": "Animal", "role": "Neutre", "jeu": "Breath of the Wild", "annee": 2017},
-    "Ombre de l'Eau de Ganon": {"race": "Démon", "role": "Boss", "jeu": "Breath of the Wild", "annee": 2017},
-    "Terrako": {"race": "Machine", "role": "Allié", "jeu": "Hyrule Warriors : L'Ère du Fléau", "annee": 2020},
-    "Babil": {"race": "Piaf", "role": "Allié", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Rauru": {"race": "Soneau", "role": "Allié", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Mineru": {"race": "Soneau", "role": "Alliée", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Sonia": {"race": "Hylien", "role": "Alliée", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Josha": {"race": "Sheikah", "role": "Alliée", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Tauro": {"race": "Hylien", "role": "Allié", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Golemax": {"race": "Machine", "role": "Boss", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Roi Gleeok": {"race": "Monstre", "role": "Boss", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Talon": {"race": "Hylien", "role": "Neutre", "jeu": "Ocarina of Time", "annee": 1998},
-    "Ingo": {"race": "Hylien", "role": "Antagoniste", "jeu": "Ocarina of Time", "annee": 1998},
-    "Roi Zora": {"race": "Zora", "role": "Allié", "jeu": "Ocarina of Time", "annee": 1998},
-    "Mido": {"race": "Kokiri", "role": "Neutre", "jeu": "Ocarina of Time", "annee": 1998},
-    "Biggoron": {"race": "Goron", "role": "Allié", "jeu": "Ocarina of Time", "annee": 1998},
-    "Peste Mojo": {"race": "Monstre", "role": "Ennemi", "jeu": "Ocarina of Time", "annee": 1998},
-    "Bongo Bongo": {"race": "Démon", "role": "Boss", "jeu": "Ocarina of Time", "annee": 1998},
-    "Mikau": {"race": "Zora", "role": "Allié", "jeu": "Majora's Mask", "annee": 2000},
-    "Lulu": {"race": "Zora", "role": "Alliée", "jeu": "Majora's Mask", "annee": 2000},
-    "Darmani": {"race": "Goron", "role": "Allié", "jeu": "Majora's Mask", "annee": 2000},
-    "Igos du Ikana": {"race": "Stalfos", "role": "Boss", "jeu": "Majora's Mask", "annee": 2000},
-    "Gyorg": {"race": "Monstre", "role": "Boss", "jeu": "Majora's Mask", "annee": 2000},
-    "Goht": {"race": "Machine", "role": "Boss", "jeu": "Majora's Mask", "annee": 2000},
-    "Odolwa": {"race": "Démon", "role": "Boss", "jeu": "Majora's Mask", "annee": 2000},
-    "Arielle": {"race": "Hylien", "role": "Alliée", "jeu": "The Wind Waker", "annee": 2002},
-    "Fado": {"race": "Kokiri", "role": "Allié", "jeu": "The Wind Waker", "annee": 2002},
-    "Laruto": {"race": "Zora", "role": "Alliée", "jeu": "The Wind Waker", "annee": 2002},
-    "Cyclos": {"race": "Divinité", "role": "Boss", "jeu": "The Wind Waker", "annee": 2002},
-    "Zephos": {"race": "Divinité", "role": "Neutre", "jeu": "The Wind Waker", "annee": 2002},
-    "Gordon": {"race": "Machine", "role": "Boss", "jeu": "The Wind Waker", "annee": 2002},
-    "Roi Cuirasse": {"race": "Monstre", "role": "Boss", "jeu": "The Wind Waker", "annee": 2002},
-    "Salvatore": {"race": "Hylien", "role": "Neutre", "jeu": "The Wind Waker", "annee": 2002},
-    "Reynald": {"race": "Hylien", "role": "Allié", "jeu": "Twilight Princess", "annee": 2006},
-    "Telma": {"race": "Hylien", "role": "Alliée", "jeu": "Twilight Princess", "annee": 2006},
-    "Balder": {"race": "Hylien", "role": "Neutre", "jeu": "Twilight Princess", "annee": 2006},
-    "Yéti": {"race": "Yéti", "role": "Allié", "jeu": "Twilight Princess", "annee": 2006},
-    "Matornia": {"race": "Yéti", "role": "Boss", "jeu": "Twilight Princess", "annee": 2006},
-    "Octolacanthe": {"race": "Monstre", "role": "Boss", "jeu": "Twilight Princess", "annee": 2006},
-    "Magmaudit": {"race": "Goron", "role": "Boss", "jeu": "Twilight Princess", "annee": 2006},
-    "Célestrier": {"race": "Oiseau", "role": "Allié", "jeu": "Skyward Sword", "annee": 2011},
-    "Morcego": {"race": "Démon", "role": "Neutre", "jeu": "Skyward Sword", "annee": 2011},
-    "Onox": {"race": "Démon", "role": "Boss", "jeu": "Oracle of Seasons", "annee": 2001},
-    "Veran": {"race": "Ombre", "role": "Boss", "jeu": "Oracle of Ages", "annee": 2001},
-    "Arbre Bojo": {"race": "Divinité", "role": "Allié", "jeu": "Oracle of Ages", "annee": 2001},
-    "Din": {"race": "Divinité", "role": "Alliée", "jeu": "Oracle of Seasons", "annee": 2001},
-    "Nayru": {"race": "Divinité", "role": "Alliée", "jeu": "Oracle of Ages", "annee": 2001},
-    "Farore": {"race": "Divinité", "role": "Alliée", "jeu": "Oracle of Ages", "annee": 2001},
-    "Tarkin": {"race": "Humaine", "role": "Neutre", "jeu": "Link's Awakening", "annee": 1993},
-    "Toutou": {"race": "Monstre", "role": "Allié", "jeu": "Link's Awakening", "annee": 1993},
-    "Ciela": {"race": "Fée", "role": "Alliée", "jeu": "Phantom Hourglass", "annee": 2007},
-    "Siwan": {"race": "Divinité", "role": "Allié", "jeu": "Phantom Hourglass", "annee": 2007},
-    "Kimado": {"race": "Démon", "role": "Boss", "jeu": "Spirit Tracks", "annee": 2009},
-    "Koltin": {"race": "Monstre", "role": "Neutre", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Penn": {"race": "Piaf", "role": "Allié", "jeu": "Tears of the Kingdom", "annee": 2023},
-    "Grosaillieh": {"race": "Hylien", "role": "Allié", "jeu": "Breath of the Wild", "annee": 2017},
-    "Marlon": {"race": "Divinité", "role": "Alliée", "jeu": "Breath of the Wild", "annee": 2017},
-    "Meryth": {"race": "Zora", "role": "Allié", "jeu": "Breath of the Wild", "annee": 2017}
-}
+ZELDA_DATA, HOLLOW_KNIGHT_PERSOS = charger_donnees_externes()
 
 # --- DICTIONNAIRES POKÉMON ---
 TRAD_OEUFS = {
@@ -440,7 +270,7 @@ def extraire_adn_couleurs(image_url):
     except:
         return ["#ccc", "#999", "#666", "#333", "#000"]
 
-# 1. BARRE LATÉRALE DE NAVIGATION
+# --- BARRE LATÉRALE DE NAVIGATION ---
 st.sidebar.markdown("## 🔴 Poké-Hub Web")
 st.sidebar.markdown("---")
 mode_choisi = st.sidebar.radio(
@@ -490,7 +320,7 @@ elif mode_choisi == "👁️ Détecteur Sheikah (Zelda Wordle)":
     st.caption("Flèches : 🔼 La première apparition du secret est plus RÉCENTE | 🔽 Le secret est plus ANCIEN.")
     
     if not os.path.exists(DOSSIER_PORTRAITS_ZELDA):
-        st.info("💡 Astuce : Créez un dossier 'portraits_zelda' contenant les images de vos personnages (ex: 'Saria.png', 'Ganon.jpg') pour remplacer les avatars !")
+        st.info("💡 Astuce : Créez un dossier 'portraits_zelda' contenant les images de vos personnages pour remplacer les avatars !")
 
     if "z_secret_name" not in st.session_state:
         st.session_state.z_secret_name = random.choice(list(ZELDA_DATA.keys()))
@@ -515,7 +345,6 @@ elif mode_choisi == "👁️ Détecteur Sheikah (Zelda Wordle)":
                         st.session_state.z_gagne = True
                     st.rerun()
 
-        # SYSTÈME D'INDICES PROGRESSIFS
         with st.expander("💡 Besoin d'un indice ?"):
             if len(st.session_state.z_essais) >= 5:
                 st.write(f"La première lettre de l'entité est : **{st.session_state.z_secret_name[0].upper()}**")
@@ -529,10 +358,8 @@ elif mode_choisi == "👁️ Détecteur Sheikah (Zelda Wordle)":
     if st.session_state.z_gagne:
         st.balloons()
         st.success(f"🏆 IDENTIFICATION RÉUSSIE ! C'était bien : **{st.session_state.z_secret_name}** !")
-        
         img_victoire_html = get_zelda_image(st.session_state.z_secret_name, size=200, center=True)
         st.markdown(f"<div>{img_victoire_html}</div>", unsafe_allow_html=True)
-        
         st.write("")
         if st.button("Recharger un nouveau fichier Sheikah 🔄"):
             del st.session_state.z_secret_name
@@ -552,7 +379,6 @@ elif mode_choisi == "👁️ Détecteur Sheikah (Zelda Wordle)":
             if essai['race'] == secret_item['race']: race_html = f"<div class='w-box w-green'>{essai['race']}</div>"
             else: race_html = f"<div class='w-box w-red'>{essai['race']}</div>"
             
-            # FUSION DE ALLIÉ ET ALLIÉE POUR LE VERT 🟩
             role_essai = essai['role']
             role_secret = secret_item['role']
             est_allie = lambda r: r in ["Allié", "Alliée"]
@@ -628,7 +454,6 @@ elif mode_choisi == "🟩 Poké-Wordle (Déduction)":
                     else:
                         st.error("Veuillez choisir un Pokémon dans la liste !")
 
-            # SYSTÈME D'INDICES PROGRESSIFS
             with st.expander("💡 Besoin d'un indice ?"):
                 if len(st.session_state.wordle_essais) >= 5:
                     st.write(f"La première lettre du Pokémon est : **{secret['nom'][0].upper()}**")
@@ -686,7 +511,7 @@ elif mode_choisi == "🟩 Poké-Wordle (Déduction)":
                 with c5: st.markdown(poids_html, unsafe_allow_html=True)
 
 # ==========================================
-# 🎒 MODE : BLIND STARTER (AUDIO)
+# 🎒 MODE : BLIND STARTER (AUDIO / DEX / ETC.)
 # ==========================================
 elif mode_choisi == "🎒 Blind Starter (Audio)":
     st.title("🎒 Choisissez votre Starter à l'aveugle !")
@@ -727,17 +552,13 @@ elif mode_choisi == "🎒 Blind Starter (Audio)":
                 st.image(starters[i]["image"], use_container_width=True)
 
     if choix is not None:
-        st.divider()
-        st.balloons()
+        st.divider(); st.balloons()
         st.header(f"Félicitations ! Vous partez avec **{starters[choix]['nom']}** ! 🎉")
         if st.button("Recommencer un tirage 🔄", type="primary"):
             del st.session_state.starters_audio
             st.session_state.choix_audio = None
             st.rerun()
 
-# ==========================================
-# 🔢 MODE : BLIND STARTER (POKÉDEX)
-# ==========================================
 elif mode_choisi == "🔢 Blind Starter (Pokédex)":
     st.title("🔢 Registre Pokédex")
     st.write("Faites appel à votre mémoire ! Choisissez un Pokémon uniquement à partir de son numéro d'identification national.")
@@ -770,8 +591,7 @@ elif mode_choisi == "🔢 Blind Starter (Pokédex)":
                 st.info(f"📚 **Entrée Pokédex :**\n\n# {num_formate}")
                 st.markdown("<div style='font-size: 60px; text-align: center; margin: 20px 0;'>📖</div>", unsafe_allow_html=True)
                 if st.button(f"👉 Choisir le {i+1}", key=f"btn_dex_{i}", use_container_width=True, type="primary"):
-                    st.session_state.choix_dex = i
-                    st.rerun()
+                    st.session_state.choix_dex = i; st.rerun()
             else:
                 if i == choix:
                     st.success(f"🌟 VOTRE CHOIX\n\n**{starters[i]['nom']}**")
@@ -781,17 +601,13 @@ elif mode_choisi == "🔢 Blind Starter (Pokédex)":
                     st.markdown(f'<div style="text-align: center;"><img src="{starters[i]["image"]}" style="width: 100px; opacity: 0.5;"></div>', unsafe_allow_html=True)
 
     if choix is not None:
-        st.divider()
-        st.balloons()
+        st.divider(); st.balloons()
         st.header(f"Mémoire infaillible ! C'était bien **{starters[choix]['nom']}** ! 🎉")
         if st.button("Recommencer un tirage 🔄", type="primary"):
             del st.session_state.starters_dex
             st.session_state.choix_dex = None
             st.rerun()
 
-# ==========================================
-# 📊 MODE : BLIND STARTER (MEILLEURE STAT)
-# ==========================================
 elif mode_choisi == "📊 Blind Starter (Meilleure Stat)":
     st.title("📊 Analyseur de Potentiel")
     st.write("Choisissez votre futur champion en vous basant uniquement sur sa statistique de base la plus élevée !")
@@ -827,8 +643,7 @@ elif mode_choisi == "📊 Blind Starter (Meilleure Stat)":
                 st.info(f"📈 **Meilleure Stat :**\n\n{starters[i]['stat_name']} ({starters[i]['stat_val']} BS)")
                 st.markdown("<div style='font-size: 60px; text-align: center; margin: 20px 0;'>🥊</div>", unsafe_allow_html=True)
                 if st.button(f"👉 Recruter le {i+1}", key=f"btn_stat_{i}", use_container_width=True, type="primary"):
-                    st.session_state.choix_stat = i
-                    st.rerun()
+                    st.session_state.choix_stat = i; st.rerun()
             else:
                 if i == choix:
                     st.success(f"🌟 RECRUTÉ !\n\n**{starters[i]['nom']}**")
@@ -838,17 +653,13 @@ elif mode_choisi == "📊 Blind Starter (Meilleure Stat)":
                     st.markdown(f'<div style="text-align: center;"><img src="{starters[i]["image"]}" style="width: 100px; opacity: 0.5;"></div>', unsafe_allow_html=True)
 
     if choix is not None:
-        st.divider()
-        st.balloons()
+        st.divider(); st.balloons()
         st.header(f"Un choix tactique ! Vous partez avec **{starters[choix]['nom']}** ! 🎉")
         if st.button("Rechercher de nouveaux talents 🔄", type="primary"):
             del st.session_state.starters_stat
             st.session_state.choix_stat = None
             st.rerun()
 
-# ==========================================
-# 🥚 MODE : BLIND STARTER (INCUBATEUR)
-# ==========================================
 elif mode_choisi == "🥚 Blind Starter (Incubateur)":
     st.title("🥚 L'Incubateur Mystère")
     st.write("Bienvenue à la Pension Pokémon ! Choisissez un de ces 3 œufs en vous basant uniquement sur son (ou ses) groupe(s) d'œuf(s).")
@@ -880,18 +691,14 @@ elif mode_choisi == "🥚 Blind Starter (Incubateur)":
             st.markdown(f"### Incubateur {i+1}")
             if choix is None:
                 st.info(f"🧬 **Groupe d'Œuf :**\n\n{starters[i]['oeufs']}")
-                
                 try:
                     img_oeuf = get_base64_image(os.path.join(DOSSIER_DU_JEU, "oeuf.png"))
                     egg_html = f'<img src="data:image/png;base64,{img_oeuf}" style="width: 120px; filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.3));">'
                 except:
                     egg_html = '<div style="font-size: 100px; text-align:center;">🥚</div>'
-                
                 st.markdown(f"<div class='egg-anim'>{egg_html}</div>", unsafe_allow_html=True)
-                
                 if st.button(f"🔥 Faire éclore le {i+1}", key=f"btn_oeuf_{i}", use_container_width=True, type="primary"):
-                    st.session_state.choix_oeuf = i
-                    st.rerun()
+                    st.session_state.choix_oeuf = i; st.rerun()
             else:
                 if i == choix:
                     st.success(f"🌟 IL ÉCLOT !\n\n**{starters[i]['nom']}**")
@@ -901,17 +708,13 @@ elif mode_choisi == "🥚 Blind Starter (Incubateur)":
                     st.markdown(f'<div style="text-align: center;"><img src="{starters[i]["image"]}" style="width: 100px; opacity: 0.5;"></div>', unsafe_allow_html=True)
 
     if choix is not None:
-        st.divider()
-        st.balloons()
+        st.divider(); st.balloons()
         st.header(f"Oh ? Un **{starters[choix]['nom']}** sort de l'œuf ! 🎉")
         if st.button("Adopter un nouvel œuf 🔄", type="primary"):
             del st.session_state.starters_oeuf
             st.session_state.choix_oeuf = None
             st.rerun()
 
-# ==========================================
-# 🔎 MODE : BLIND STARTER (ZOOM INTENSIF 9.0)
-# ==========================================
 elif mode_choisi == "🔎 Blind Starter (Zoom)":
     st.title("🔎 Starter au Microscope")
     st.write("Observez ces fragments de sprites zoomés à l'extrême pour deviner quel Pokémon se cache derrière !")
@@ -946,8 +749,7 @@ elif mode_choisi == "🔎 Blind Starter (Zoom)":
                 </div>
                 """, unsafe_allow_html=True)
                 if st.button(f"🔬 Sélectionner le {i+1}", key=f"btn_zoom_{i}", use_container_width=True, type="primary"):
-                    st.session_state.choix_zoom = i
-                    st.rerun()
+                    st.session_state.choix_zoom = i; st.rerun()
             else:
                 if i == choix:
                     st.success(f"🌟 VOTRE CHOIX\n\n**{starters[i]['nom']}**")
@@ -957,8 +759,7 @@ elif mode_choisi == "🔎 Blind Starter (Zoom)":
                     st.markdown(f'<div style="text-align: center;"><img src="{starters[i]["image"]}" style="width: 100px; opacity: 0.5;"></div>', unsafe_allow_html=True)
 
     if choix is not None:
-        st.divider()
-        st.balloons()
+        st.divider(); st.balloons()
         st.header(f"Excellente observation ! C'est bien un **{starters[choix]['nom']}** ! 🎉")
         if st.button("Nouveaux échantillons 🔄", type="primary"):
             del st.session_state.starters_zoom
@@ -1018,8 +819,7 @@ elif mode_choisi == "🧬 Blind Starter (Labo Scanners)":
                     st.markdown(f'<div style="text-align: center;"><img src="{starters[i]["image"]}" style="width: 100px; opacity: 0.5;"></div>', unsafe_allow_html=True)
 
     if choix is not None:
-        st.divider()
-        st.balloons()
+        st.divider(); st.balloons()
         st.header(f"Félicitations ! Vous partez à l'aventure avec **{starters[choix]['nom']}** ! 🎉")
         if st.button("Vider la machine et recommencer 🔄", type="primary"):
             del st.session_state.starters_labo
@@ -1027,6 +827,9 @@ elif mode_choisi == "🧬 Blind Starter (Labo Scanners)":
             st.session_state.vues_labo = {0: "adn", 1: "adn", 2: "adn"}
             st.rerun()
 
+# ==========================================
+# 🕵️‍♂️ MODES : QUI EST-CE ? (4 LICENCES)
+# ==========================================
 elif mode_choisi == "🕵️‍♂️ Qui est-ce ? (Pokémon)":
     st.title("🕵️‍♂️ Le Plateau Qui est-ce ? (Pokémon)")
     st.write("Un Pokémon secret a été tiré au sort parmi les 9 générations (1025 Pokémon). Éliminez les suspects et portez votre accusation !")
@@ -1045,8 +848,7 @@ elif mode_choisi == "🕵️‍♂️ Qui est-ce ? (Pokémon)":
     nom_secret = secret_poke["nom"] if secret_poke else "Inconnu"
 
     if st.session_state.pokemon_gagne:
-        st.balloons()
-        st.success(f"🏆 BIEN JOUÉ ! Le Pokémon mystère était bien **{nom_secret}** !")
+        st.balloons(); st.success(f"🏆 BIEN JOUÉ ! Le Pokémon mystère était bien **{nom_secret}** !")
         if secret_poke: st.markdown(f'<div style="text-align: center;"><img src="{secret_poke["image"]}" style="width: 200px; filter: drop-shadow(0px 10px 15px rgba(16, 185, 129, 0.4));"></div>', unsafe_allow_html=True)
         st.write("")
         if st.button("Recommencer une partie Pokémon 🔄", type="primary", use_container_width=True):
@@ -1058,8 +860,7 @@ elif mode_choisi == "🕵️‍♂️ Qui est-ce ? (Pokémon)":
         if accusation_poke != "-- Qui est-ce ? --":
             if accusation_poke.lower() == nom_secret.lower(): st.session_state.pokemon_gagne = True; st.rerun()
             else: st.error(f"❌ Ce n'est pas {accusation_poke} ! Poursuivez vos recherches.")
-        st.divider()
-        st.subheader("📋 Votre plateau de jeu (24 Pokémon)")
+        st.divider(); st.subheader("📋 Votre plateau de jeu (24 Pokémon)")
         with st.expander("👀 Voir le secret"): st.write(f"Pokémon : **{nom_secret}**")
         cols = st.columns(4)
         for idx, p in enumerate(st.session_state.pokemon_liste):
@@ -1080,8 +881,7 @@ elif mode_choisi == "⚔️ Qui est-ce ? (Smash Bros)":
         st.error(f"📁 Dossier introuvable ! Il devrait être ici : {DOSSIER_PORTRAITS}")
     else:
         tous_les_persos = [f for f in os.listdir(DOSSIER_PORTRAITS) if f.endswith(('.png', '.jpg', '.jpeg'))]
-        if len(tous_les_persos) == 0:
-            st.warning("⚠️ Le dossier 'portraits' est vide !")
+        if len(tous_les_persos) == 0: st.warning("⚠️ Le dossier 'portraits' est vide !")
         else:
             if "smash_secret" not in st.session_state:
                 taille_grille = min(len(tous_les_persos), 24)
@@ -1094,8 +894,7 @@ elif mode_choisi == "⚔️ Qui est-ce ? (Smash Bros)":
             nom_secret = os.path.splitext(secret_file)[0]
 
             if st.session_state.smash_gagne:
-                st.balloons()
-                st.success(f"🏆 BIEN JOUÉ ! Le personnage mystère était bien **{nom_secret}** !")
+                st.balloons(); st.success(f"🏆 BIEN JOUÉ ! Le personnage mystère était bien **{nom_secret}** !")
                 img_encoded = get_base64_image(os.path.join(DOSSIER_PORTRAITS, secret_file))
                 st.markdown(f'<div style="text-align: center;"><img src="data:image/png;base64,{img_encoded}" style="width: 250px; filter: drop-shadow(0px 10px 15px rgba(56, 189, 248, 0.4));"></div>', unsafe_allow_html=True)
                 st.write("")
@@ -1108,8 +907,7 @@ elif mode_choisi == "⚔️ Qui est-ce ? (Smash Bros)":
                 if accusation != "-- Qui est-ce ? --":
                     if accusation.lower() == nom_secret.lower(): st.session_state.smash_gagne = True; st.rerun()
                     else: st.error(f"❌ Ce n'est pas {accusation} ! Retentez votre chance.")
-                st.divider()
-                st.subheader("📋 Votre plateau de jeu (24 personnages)")
+                st.divider(); st.subheader("📋 Votre plateau de jeu (24 personnages)")
                 with st.expander("👀 Voir le secret"): st.write(f"Personnage : **{nom_secret}**")
                 cols = st.columns(4)
                 for idx, fichier in enumerate(st.session_state.smash_liste):
@@ -1129,7 +927,6 @@ elif mode_choisi == "🧝‍♂️ Qui est-ce ? (Zelda)":
     st.write("Un personnage ou monstre d'Hyrule a été tiré au sort. Éliminez les suspects et portez votre accusation !")
 
     tous_les_persos_zelda = list(ZELDA_DATA.keys())
-    
     if "zelda_qe_secret" not in st.session_state:
         taille_grille = min(len(tous_les_persos_zelda), 24)
         st.session_state.zelda_qe_liste = random.sample(tous_les_persos_zelda, taille_grille)
@@ -1140,8 +937,7 @@ elif mode_choisi == "🧝‍♂️ Qui est-ce ? (Zelda)":
     nom_secret = st.session_state.zelda_qe_secret
 
     if st.session_state.zelda_qe_gagne:
-        st.balloons()
-        st.success(f"🏆 BIEN JOUÉ ! L'entité mystère était bien **{nom_secret}** !")
+        st.balloons(); st.success(f"🏆 BIEN JOUÉ ! L'entité mystère était bien **{nom_secret}** !")
         img_html = get_zelda_image(nom_secret, size=250, center=True)
         st.markdown(f'<div>{img_html}</div>', unsafe_allow_html=True)
         st.write("")
@@ -1151,20 +947,15 @@ elif mode_choisi == "🧝‍♂️ Qui est-ce ? (Zelda)":
     else:
         noms_pour_selection = ["-- Qui est-ce ? --"] + sorted(st.session_state.zelda_qe_liste)
         accusation = st.selectbox("🎯 PORTER UNE ACCUSATION FINALE :", noms_pour_selection, key="acc_zelda")
-        
         if accusation != "-- Qui est-ce ? --":
             if accusation.lower() == nom_secret.lower(): st.session_state.zelda_qe_gagne = True; st.rerun()
             else: st.error(f"❌ Ce n'est pas {accusation} ! Retentez votre chance.")
-            
-        st.divider()
-        st.subheader("📋 Votre plateau de jeu (24 suspects)")
+        st.divider(); st.subheader("📋 Votre plateau de jeu (24 suspects)")
         with st.expander("👀 Voir le secret"): st.write(f"Personnage : **{nom_secret}**")
-        
         cols = st.columns(4)
         for idx, nom_perso in enumerate(st.session_state.zelda_qe_liste):
             img_html = get_zelda_image(nom_perso, size=100, center=True)
             est_elimine = nom_perso in st.session_state.zelda_qe_elimines
-            
             with cols[idx % 4]:
                 if est_elimine:
                     st.markdown(f"""<div class="game-card-eliminated">{img_html}<p style="margin: 0; font-size: 14px; font-weight: bold; text-decoration: line-through;">{nom_perso}</p></div>""", unsafe_allow_html=True)
@@ -1173,15 +964,12 @@ elif mode_choisi == "🧝‍♂️ Qui est-ce ? (Zelda)":
                     st.markdown(f"""<div class="game-card game-card-zelda">{img_html}<p style="margin: 0; font-size: 14px; font-weight: bold; color: #facc15;">{nom_perso}</p></div>""", unsafe_allow_html=True)
                     if st.button("❌", key=f"elim_z_{idx}", use_container_width=True): st.session_state.zelda_qe_elimines.append(nom_perso); st.rerun()
 
-# ==========================================
-# 🪲 MODE : QUI EST-CE ? (HOLLOW KNIGHT)
-# ==========================================
 elif mode_choisi == "🪲 Qui est-ce ? (Hollow Knight)":
     st.title("🪲 Le Plateau Qui est-ce ? (Hollow Knight)")
-    st.write("Un insecte d'Hallownest a été tiré au sort. Éliminez les suspects et portez votre accusation !")
+    st.write("Un insecte d'Hallownest ou de Pharloom a été tiré au sort. Éliminez les suspects et portez votre accusation !")
 
     if not os.path.exists(DOSSIER_PORTRAITS_HK):
-        st.info("💡 Astuce : Créez un dossier 'portraits_hk' contenant les images de vos personnages (ex: 'Hornet.png') pour remplacer les avatars !")
+        st.info("💡 Astuce : Créez un dossier 'portraits_hk' contenant les images de vos personnages pour remplacer les avatars !")
 
     if "hk_qe_secret" not in st.session_state:
         taille_grille = min(len(HOLLOW_KNIGHT_PERSOS), 24)
@@ -1193,8 +981,7 @@ elif mode_choisi == "🪲 Qui est-ce ? (Hollow Knight)":
     nom_secret = st.session_state.hk_qe_secret
 
     if st.session_state.hk_qe_gagne:
-        st.balloons()
-        st.success(f"🏆 BIEN JOUÉ ! L'insecte mystère était bien **{nom_secret}** !")
+        st.balloons(); st.success(f"🏆 BIEN JOUÉ ! L'insecte mystère était bien **{nom_secret}** !")
         img_html = get_hk_image(nom_secret, size=250, center=True)
         st.markdown(f'<div>{img_html}</div>', unsafe_allow_html=True)
         st.write("")
@@ -1204,20 +991,15 @@ elif mode_choisi == "🪲 Qui est-ce ? (Hollow Knight)":
     else:
         noms_pour_selection = ["-- Qui est-ce ? --"] + sorted(st.session_state.hk_qe_liste)
         accusation = st.selectbox("🎯 PORTER UNE ACCUSATION FINALE :", noms_pour_selection, key="acc_hk")
-        
         if accusation != "-- Qui est-ce ? --":
             if accusation.lower() == nom_secret.lower(): st.session_state.hk_qe_gagne = True; st.rerun()
             else: st.error(f"❌ Ce n'est pas {accusation} ! Retentez votre chance.")
-            
-        st.divider()
-        st.subheader("📋 Votre plateau de jeu (24 suspects)")
+        st.divider(); st.subheader("📋 Votre plateau de jeu (24 suspects)")
         with st.expander("👀 Voir le secret"): st.write(f"Personnage : **{nom_secret}**")
-        
         cols = st.columns(4)
         for idx, nom_perso in enumerate(st.session_state.hk_qe_liste):
             img_html = get_hk_image(nom_perso, size=100, center=True)
             est_elimine = nom_perso in st.session_state.hk_qe_elimines
-            
             with cols[idx % 4]:
                 if est_elimine:
                     st.markdown(f"""<div class="game-card-eliminated">{img_html}<p style="margin: 0; font-size: 14px; font-weight: bold; text-decoration: line-through;">{nom_perso}</p></div>""", unsafe_allow_html=True)
