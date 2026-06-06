@@ -886,11 +886,11 @@ elif mode_choisi == "🕵️‍♂️ Qui est-ce ? (Pokémon)":
             with cols[idx % 4]:
                 if est_elimine:
                     st.markdown(f"""<div class="game-card-eliminated"><img src="{p["image"]}" width="90"><p>{p["nom"]}</p></div>""", unsafe_allow_html=True)
-                    if st.button("🔄", key=f"ret_{idx}"): st.session_state.pokemon_elimines.remove(p["nom"]); st.rerun()
+                    if st.button("🔄 Annuler", key=f"ret_{idx}", use_container_width=True): st.session_state.pokemon_elimines.remove(p["nom"]); st.rerun()
                 else:
-                    st.markdown(f"""<div class="game-card"><img src="{p["image"]}" width="90"><p style="color: #ff4b4b;">{p["nom"]}</p></div>""", unsafe_allow_html=True)
-                    if st.button("❌", key=f"elim_{idx}"): st.session_state.pokemon_elimines.append(p["nom"]); st.rerun()
-
+                    st.markdown(f"""<div class="game-card"><img src="{p["image"]}" width="90"><p style="color: #ff4b4b; margin-bottom: 0;">{p["nom"]}</p></div>""", unsafe_allow_html=True)
+                    if st.button("❌ Éliminer", key=f"elim_{idx}", use_container_width=True): st.session_state.pokemon_elimines.append(p["nom"]); st.rerun()
+                    
 elif mode_choisi == "⚔️ Qui est-ce ? (Smash Bros)":
     st.title("⚔️ Le Plateau Qui est-ce ? (Smash Bros)")
     if os.path.exists(DOSSIER_PORTRAITS):
@@ -930,7 +930,7 @@ elif mode_choisi == "⚔️ Qui est-ce ? (Smash Bros)":
                         if st.button("🔄", key=f"ret_smash_{idx}", use_container_width=True): st.session_state.smash_elimines.remove(fichier); st.rerun()
                     else:
                         st.markdown(f"""<div class="game-card game-card-smash"><img src="data:image/png;base64,{img_encoded}" style="width: 90px; border-radius: 5px; margin-bottom: 5px; filter: drop-shadow(0px 5px 5px rgba(0,0,0,0.3));"><p style="margin: 0; font-size: 13px; font-weight: bold; color: #38bdf8;">{nom_perso}</p></div>""", unsafe_allow_html=True)
-                        if st.button("❌", key=f"elim_smash_{idx}", use_container_width=True): st.session_state.smash_elimines.append(fichier); st.rerun()
+                        if st.button("❌ Éliminer", key=f"elim_smash_{idx}", use_container_width=True): st.session_state.smash_elimines.append(fichier); st.rerun()
     else:
         st.warning("Dossier portraits introuvable.")
 
@@ -970,10 +970,10 @@ elif mode_choisi == "🧝‍♂️ Qui est-ce ? (Zelda)":
             with cols[idx % 4]:
                 if est_elimine:
                     st.markdown(f"<div class='game-card-eliminated'>{img_html}<p style='text-decoration: line-through;'>{nom_perso}</p></div>", unsafe_allow_html=True)
-                    if st.button("🔄", key=f"rz_{idx}"): st.session_state.zelda_qe_elimines.remove(nom_perso); st.rerun()
+                    if st.button("🔄 Annuler", key=f"rz_{idx}", use_container_width=True): st.session_state.zelda_qe_elimines.remove(nom_perso); st.rerun()
                 else:
-                    st.markdown(f"<div class='game-card game-card-zelda'>{img_html}<p style='color: #facc15;'>{nom_perso}</p></div>", unsafe_allow_html=True)
-                    if st.button("❌", key=f"ez_{idx}"): st.session_state.zelda_qe_elimines.append(nom_perso); st.rerun()
+                    st.markdown(f"<div class='game-card game-card-zelda'>{img_html}<p style='color: #facc15; margin-bottom: 0;'>{nom_perso}</p></div>", unsafe_allow_html=True)
+                    if st.button("❌ Éliminer", key=f"ez_{idx}", use_container_width=True): st.session_state.zelda_qe_elimines.append(nom_perso); st.rerun()
 
 # ==========================================
 # 🪲 MODE : QUI EST-CE ? (HOLLOW KNIGHT)
@@ -1029,4 +1029,4 @@ elif mode_choisi == "🪲 Qui est-ce ? (Hollow Knight)":
                     if st.button("🔄", key=f"ret_hk_{idx}", use_container_width=True): st.session_state.hk_qe_elimines.remove(nom_perso); st.rerun()
                 else:
                     st.markdown(f"""<div class="game-card game-card-hk">{img_html}<p style="margin: 0; font-size: 14px; font-weight: bold; color: #94a3b8;">{nom_perso}</p></div>""", unsafe_allow_html=True)
-                    if st.button("❌", key=f"elim_hk_{idx}", use_container_width=True): st.session_state.hk_qe_elimines.append(nom_perso); st.rerun()
+                    if st.button("❌ Éliminer", key=f"elim_hk_{idx}", use_container_width=True): st.session_state.hk_qe_elimines.append(nom_perso); st.rerun()
