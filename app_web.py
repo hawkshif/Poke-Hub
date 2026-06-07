@@ -10,6 +10,7 @@ from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
 import urllib.parse
 import datetime
+from supabase import create_client
 
 # ==========================================
 # ⚙️ CONFIGURATION DE LA PAGE
@@ -341,26 +342,60 @@ def get_chemin_joueur(nom_joueur):
     # Génère un chemin propre du type : sauvegardes/link.json
     return os.path.join("sauvegardes", f"{nom_joueur.lower()}.json")
 
+# ==========================================
+# 🔗 INITIALISATION DE LA CONNEXION SUPABASE
+# ==========================================
+@st.cache_resource
+def init_connection():
+    # Streamlit va automatiquement lire le fichier .streamlit/secrets.toml
+    url = st.secrets["supabase"]["url"]
+    key = st.secrets["supabase"]["key"]
+    return create_client(url, key)
+
+# On crée le client Supabase qui servira pour tout le jeu
+supabase = init_connection()
+
+# ==========================================
+# 💾 LES NOUVELLES FONCTIONS DE SAUVEGARDE WEB
+# ==========================================
 def charger_collection(nom_joueur):
-    chemin = get_chemin_joueur(nom_joueur)
-    if os.path.exists(chemin):
-        try:
-            with open(chemin, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                # Sécurité : si le joueur n'a pas de jetons, on lui en donne 500
-                if "jetons" not in data:
-                    data["jetons"] = 500
-                return data
-        except Exception:
-            pass # Si le fichier a un bug, on l'ignore et on charge par défaut
+    # On force le pseudo en minuscules pour éviter les doublons (ex: Nathan et nathan)
+    pseudo_clean = nom_joueur.lower().strip()
+    
+    try:
+        # On demande à Supabase la ligne qui correspond au pseudo
+        reponse = supabase.table("sauvegardes").select("collection").eq("pseudo", pseudo_clean).execute()
+        
+        if len(reponse.data) > 0:
+            # Le joueur existe déjà ! On récupère son dictionnaire JSON
+            data = reponse.data[0]["collection"]
+            if "jetons" not in data:
+                data["jetons"] = 500
+            return data
+        else:
+            # Nouveau joueur ! On lui crée un profil par défaut
+            nouveau_profil = {"jetons": 500, "Zelda": {}, "Hollow Knight": {}, "Pokémon": {}}
             
-    # Nouveau joueur : profil par défaut
-    return {"jetons": 500, "Zelda": {}, "Hollow Knight": {}, "Pokémon": {}}
+            # On insère ce nouveau joueur directement dans la table sur internet
+            supabase.table("sauvegardes").insert({
+                "pseudo": pseudo_clean, 
+                "collection": nouveau_profil
+            }).execute()
+            
+            return nouveau_profil
+            
+    except Exception as e:
+        st.error(f"⚠️ Erreur de connexion à Supabase : {e}")
+        # En cas de coupure internet, on renvoie un profil temporaire pour éviter le crash
+        return {"jetons": 500, "Zelda": {}, "Hollow Knight": {}, "Pokémon": {}}
 
 def sauvegarder_collection(nom_joueur, collection):
-    chemin = get_chemin_joueur(nom_joueur)
-    with open(chemin, "w", encoding="utf-8") as f:
-        json.dump(collection, f, indent=4, ensure_ascii=False)
+    pseudo_clean = nom_joueur.lower().strip()
+    try:
+        # On met à jour la colonne 'collection' pour ce pseudo précis
+        supabase.table("sauvegardes").update({"collection": collection}).eq("pseudo", pseudo_clean).execute()
+    except Exception as e:
+        st.error(f"⚠️ Erreur lors de la sauvegarde sur internet : {e}")
 
 def ajouter_jetons(nom_joueur, montant):
     collec = charger_collection(nom_joueur)
