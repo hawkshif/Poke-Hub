@@ -23,8 +23,8 @@ st.markdown("""
 <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
-    
+    /* header {visibility: hidden;}
+    */
     .stApp {
         background: radial-gradient(circle at 50% 0%, #1e293b 0%, #020617 100%) !important;
         color: #f8fafc;
@@ -161,6 +161,23 @@ DOSSIER_DU_JEU = os.path.dirname(os.path.abspath(__file__))
 DOSSIER_PORTRAITS = os.path.join(DOSSIER_DU_JEU, "portraits")
 DOSSIER_PORTRAITS_ZELDA = os.path.join(DOSSIER_DU_JEU, "portraits_zelda")
 DOSSIER_PORTRAITS_HK = os.path.join(DOSSIER_DU_JEU, "portraits_hk")
+
+if not os.path.exists("sauvegardes"):
+    os.makedirs("sauvegardes")
+    
+if "joueur" not in st.session_state:
+    st.session_state.joueur = None
+
+if st.session_state.joueur is None:
+    st.title("🎮 Connexion au Poké-Hub")
+    pseudo = st.text_input("Entre ton pseudo pour jouer :")
+    
+    if st.button("Entrer dans le jeu"):
+        if pseudo.strip():
+            st.session_state.joueur = pseudo.strip()
+            st.rerun()
+            
+    st.stop()
 
 # ==========================================
 # 📦 ASPIRATION DES BASES DE DONNÉES JSON
@@ -320,21 +337,35 @@ def extraire_adn_couleurs(image_url):
     # --- SYSTÈME DE COLLECTION ---
 FICHIER_COLLECTION = os.path.join(DOSSIER_DU_JEU, "collection.json")
 
-def charger_collection():
-    if os.path.exists(FICHIER_COLLECTION):
-        with open(FICHIER_COLLECTION, "r", encoding="utf-8") as f:
-            return json.load(f)
-    # On ajoute "jetons": 500 ici :
+def get_chemin_joueur(nom_joueur):
+    # Génère un chemin propre du type : sauvegardes/link.json
+    return os.path.join("sauvegardes", f"{nom_joueur.lower()}.json")
+
+def charger_collection(nom_joueur):
+    chemin = get_chemin_joueur(nom_joueur)
+    if os.path.exists(chemin):
+        try:
+            with open(chemin, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                # Sécurité : si le joueur n'a pas de jetons, on lui en donne 500
+                if "jetons" not in data:
+                    data["jetons"] = 500
+                return data
+        except Exception:
+            pass # Si le fichier a un bug, on l'ignore et on charge par défaut
+            
+    # Nouveau joueur : profil par défaut
     return {"jetons": 500, "Zelda": {}, "Hollow Knight": {}, "Pokémon": {}}
 
-def sauvegarder_collection(collection):
-    with open(FICHIER_COLLECTION, "w", encoding="utf-8") as f:
+def sauvegarder_collection(nom_joueur, collection):
+    chemin = get_chemin_joueur(nom_joueur)
+    with open(chemin, "w", encoding="utf-8") as f:
         json.dump(collection, f, indent=4, ensure_ascii=False)
-        
-def ajouter_jetons(montant):
-    collec = charger_collection()
+
+def ajouter_jetons(nom_joueur, montant):
+    collec = charger_collection(nom_joueur)
     collec["jetons"] = collec.get("jetons", 500) + montant
-    sauvegarder_collection(collec)
+    sauvegarder_collection(nom_joueur, collec)
         
 def preparer_deck_memory(taille=12):
     """Récupère des images aléatoires dans les dossiers pour faire des paires."""
@@ -355,8 +386,9 @@ def preparer_deck_memory(taille=12):
 # ==========================================
 # 📊 BARRE LATÉRALE DE NAVIGATION
 # ==========================================
-collec = charger_collection()
+collec = charger_collection(st.session_state.joueur)
 st.sidebar.markdown("## 🔴 Poké-Hub Web")
+st.sidebar.markdown(f"👤 Connecté : **{st.session_state.joueur}**")
 st.sidebar.markdown(f"### 🪙 Solde : `{collec.get('jetons', 500)} 🪙`")
 st.sidebar.markdown("---")
 mode_choisi = st.sidebar.radio(
@@ -406,7 +438,7 @@ if mode_choisi == "🏠 Accueil":
 # 🎰 MODE : GACHA (PORTAIL D'INVOCATION)
 # ==========================================
 elif mode_choisi == "🎰 Portail d'Invocation (Gacha)":
-    collec = charger_collection()
+    collec = charger_collection(st.session_state.joueur)
     
     # --- CALCUL DU PORTAIL BOOSTÉ DU JOUR (Rotation automatique toutes les 24h) ---
     univers_dispos = ["Zelda", "Hollow Knight", "Pokémon"]
@@ -488,8 +520,8 @@ elif mode_choisi == "🎰 Portail d'Invocation (Gacha)":
         if collec.get('jetons', 0) < cout:
             st.error(f"❌ Fonds insuffisants ! Il vous faut {cout} 🪙.")
         else:
-            ajouter_jetons(-cout)
-            collec = charger_collection()
+            ajouter_jetons(st.session_state.joueur,-cout)
+            collec = charger_collection(st.session_state.joueur)
             
             with zone_resultats.container():
                 with st.spinner("Invocation en cours..."):
@@ -575,7 +607,7 @@ elif mode_choisi == "🎰 Portail d'Invocation (Gacha)":
                             st.markdown(f"<div style='transform: scale(0.85); margin: -20px 0;'>{carte_html}</div>", unsafe_allow_html=True)
                             st.caption(f"**{nom_tire}** ({rarete_finale})")
 
-                    sauvegarder_collection(collec)
+                    sauvegarder_collection(st.session_state.joueur, collec)
                     
                     if il_y_a_du_lourd: st.balloons()
                     st.success(f"🎉 Invocation terminée ! Nouveau solde : {collec['jetons']} 🪙")
@@ -585,7 +617,7 @@ elif mode_choisi == "🎰 Portail d'Invocation (Gacha)":
 # ==========================================
 elif mode_choisi == "🗂️ Mon Classeur (Collection)":
     st.title("🗂️ Classeur Multivers")
-    collec = charger_collection()
+    collec = charger_collection(st.session_state.joueur)
     
     # Statistiques
     cartes_uniques = 0
@@ -666,7 +698,7 @@ elif mode_choisi == "🎫 Ticket à Gratter (Casino)":
         </style>
     """, unsafe_allow_html=True)
 
-    collec = charger_collection()
+    collec = charger_collection(st.session_state.joueur)
     PRIX_TICKET = 50
     
     st.markdown(f"**Solde actuel :** `{collec.get('jetons', 0)} 🪙`")
@@ -703,7 +735,7 @@ elif mode_choisi == "🎫 Ticket à Gratter (Casino)":
             
         if st.button(f"Acheter un nouveau ticket ({PRIX_TICKET} 🪙) 🔄", type="primary"):
             if collec.get("jetons", 0) >= PRIX_TICKET:
-                ajouter_jetons(-PRIX_TICKET) 
+                ajouter_jetons(st.session_state.joueur, -PRIX_TICKET) 
                 del st.session_state.scratch_grid
                 st.rerun()
             else:
@@ -736,10 +768,10 @@ elif mode_choisi == "🎫 Ticket à Gratter (Casino)":
                         elif grid[idx] == "💎":
                             st.session_state.scratch_diamants += 1
                             if st.session_state.scratch_diamants == 3:
-                                ajouter_jetons(300)
+                                ajouter_jetons(st.session_state.joueur, 300)
                                 st.session_state.scratch_over = True
                         elif grid[idx] == "🪙":
-                            ajouter_jetons(10)
+                            ajouter_jetons(st.session_state.joueur, 10)
                             
                         # Vérification de fin de jeu
                         if st.session_state.scratch_coups_restants <= 0:
@@ -795,7 +827,7 @@ elif mode_choisi == "🃏 Memory des Héros (Jeu de Paires)":
         </style>
     """, unsafe_allow_html=True)
 
-    collec = charger_collection()
+    collec = charger_collection(st.session_state.joueur)
     
     if "mem_grid" not in st.session_state:
         st.session_state.mem_grid = preparer_deck_memory(taille=16)
@@ -829,7 +861,7 @@ elif mode_choisi == "🃏 Memory des Héros (Jeu de Paires)":
         idx1, idx2 = picks[0], picks[1]
         if grid[idx1] == grid[idx2]:
             st.toast("✅ Paire trouvée ! (+20 🪙)")
-            ajouter_jetons(20)
+            ajouter_jetons(st.session_state.joueur, 20)
         else:
             st.toast("❌ Ce n'est pas une paire...")
             st.session_state.mem_rev[idx1] = False
