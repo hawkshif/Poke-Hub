@@ -213,8 +213,9 @@ TRAD_TYPES = {"normal": "Normal", "fire": "Feu", "water": "Eau", "electric": "É
 GEN_RANGES = {"1G (Kanto)": (1, 151), "2G (Johto)": (152, 251), "3G (Hoenn)": (252, 386), "4G (Sinnoh)": (387, 493), "5G (Unys)": (494, 649), "6G (Kalos)": (650, 721), "7G (Alola)": (722, 809), "8G (Galar)": (810, 905), "9G (Paldea)": (906, 1025)}
 
 # --- FONCTIONS TECHNIQUES ---
-def get_base64_image(img_path):
-    with open(img_path, "rb") as file:
+@st.cache_data
+def get_base64_image(chemin_image):
+    with open(chemin_image, "rb") as file:
         return base64.b64encode(file.read()).decode()
     
 def get_base64_background(chemin_image):
@@ -870,13 +871,13 @@ elif mode_choisi == "🃏 Memory des Héros (Jeu de Paires)":
             justify-content: center; 
             overflow: hidden;
             box-sizing: border-box;
-            margin-bottom: 16px; /* <-- LA CORRECTION : Ajoute l'espacement entre les lignes ! */
+            margin-bottom: 16px;
         }
         </style>
     """, unsafe_allow_html=True)
 
-    collec = charger_collection(st.session_state.joueur)
-    
+    # ❌ La ligne charger_collection a été supprimée ici pour éviter de faire ramer internet !
+
     if "mem_grid" not in st.session_state:
         st.session_state.mem_grid = preparer_deck_memory(taille=16)
         st.session_state.mem_rev = [False] * 16
@@ -889,15 +890,14 @@ elif mode_choisi == "🃏 Memory des Héros (Jeu de Paires)":
     for i in range(16):
         with cols[i % 4]:
             if rev[i]:
+                # Grâce au cache qu'on a ajouté, ceci sera désormais instantané !
                 img_b64 = get_base64_image(grid[i])
-                # La face de la carte
                 st.markdown(f"""
                     <div class='mem-card-face'>
                         <img src='data:image/png;base64,{img_b64}' style='max-width: 90%; max-height: 90%; object-fit: contain; filter: drop-shadow(0px 5px 10px rgba(0,0,0,0.5));'>
                     </div>
                 """, unsafe_allow_html=True)
             else:
-                # Le dos de la carte
                 if st.button("🎴", key=f"mem_{i}", use_container_width=True, disabled=(len(picks) >= 2)):
                     st.session_state.mem_rev[i] = True
                     st.session_state.mem_picks.append(i)
@@ -909,6 +909,7 @@ elif mode_choisi == "🃏 Memory des Héros (Jeu de Paires)":
         idx1, idx2 = picks[0], picks[1]
         if grid[idx1] == grid[idx2]:
             st.toast("✅ Paire trouvée ! (+20 🪙)")
+            # La base de données n'est contactée QU'ICI, uniquement quand tu gagnes !
             ajouter_jetons(st.session_state.joueur, 20)
         else:
             st.toast("❌ Ce n'est pas une paire...")
@@ -919,7 +920,6 @@ elif mode_choisi == "🃏 Memory des Héros (Jeu de Paires)":
         st.rerun()
 
     st.divider()
-    # Le bouton "Relancer" reste normal car il a l'attribut type="primary"
     if st.button("Relancer la partie 🔄", type="primary"):
         del st.session_state.mem_grid
         del st.session_state.mem_rev
