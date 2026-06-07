@@ -629,10 +629,17 @@ elif mode_choisi == "🎰 Portail d'Invocation (Gacha)":
 
                         # Enregistrement
                         if univers_tire not in collec: collec[univers_tire] = {}
+                        
+                        # 💡 OPTIMISATION : On ne sauvegarde l'image que si c'est un lien web (Pokémon)
+                        # Si c'est un code lourd (Zelda/HK), on sauvegarde juste du vide ""
+                        image_legere = img_src if img_src.startswith("http") else ""
+                        
                         if nom_tire in collec[univers_tire]:
                             collec[univers_tire][nom_tire]["quantite"] += 1
+                            # Optionnel: on s'assure que les vieilles images lourdes sont écrasées par les nouvelles légères
+                            collec[univers_tire][nom_tire]["image"] = image_legere 
                         else:
-                            collec[univers_tire][nom_tire] = {"rarete": rarete_finale, "image": img_src, "quantite": 1}
+                            collec[univers_tire][nom_tire] = {"rarete": rarete_finale, "image": image_legere, "quantite": 1}
                         
                         if rarete_finale in ["Ultra Rare", "Légendaire"]: il_y_a_du_lourd = True
 
@@ -687,6 +694,12 @@ elif mode_choisi == "🗂️ Mon Classeur (Collection)":
                 img_src = i.get("image", "")
                 rarete = i.get("rarete", "Commun")
                 qte = i.get("quantite", 1)
+                
+                # 💡 RECRÉATION DYNAMIQUE : Si on n'a pas d'image ou si c'est un vieux code lourd Base64
+                if not img_src or img_src.startswith("data:image"):
+                    if u in ["Zelda", "Hollow Knight"]:
+                        # On demande au jeu de recréer l'image locale instantanément sans passer par la sauvegarde !
+                        img_src = get_image_src_for_card(n, u)
                 
                 # Génération HTML avec fallback si image manquante
                 html = generer_carte_html(n, img_src, rarete, u)
