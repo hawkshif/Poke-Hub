@@ -501,7 +501,7 @@ elif mode_choisi == "🎰 Portail d'Invocation (Gacha)":
         est_booste = (univers_booste == "Hollow Knight")
         titre = "🕸️ PORTAIL D'HALLOWNEST 🪲" + (" 🔥 BOOSTÉ 🔥" if est_booste else "")
         desc = "Réveillez les insectes et les ombres du royaume déchu !"
-        chemin_bg = "bannieres/hk_bg.jpg"
+        chemin_bg = "bannieres/hk_bg.png"
         bord = "#64748b" if not est_booste else "#facc15"
     elif "Pokémon" in univers_choisi:
         est_booste = (univers_booste == "Pokémon")
