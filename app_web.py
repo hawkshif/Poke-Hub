@@ -672,14 +672,23 @@ elif mode_choisi == "🗂️ Mon Classeur (Collection)":
     
     f_univ = st.radio("Afficher l'univers :", ["Tous", "Zelda", "Hollow Knight", "Pokémon"], horizontal=True)
     
-    # Extraction sécurisée
+    # Extraction sécurisée et mise à jour dynamique
     cartes = []
     for u, p in collec.items():
         if u != "jetons" and isinstance(p, dict):
             if f_univ == "Tous" or f_univ == u:
                 for n, i in p.items():
-                    # i doit être un dictionnaire. Si ce n'est pas le cas, on ignore
                     if isinstance(i, dict):
+                        # 💡 CORRECTION DYNAMIQUE : On force la rareté du code au lieu de la sauvegarde
+                        if u == "Zelda":
+                            # On tente de récupérer la nouvelle rareté depuis ZELDA_DATA
+                            try: i["rarete"] = ZELDA_DATA[n].get("rarete", i.get("rarete"))
+                            except: pass
+                        elif u == "Hollow Knight":
+                            # Pareil pour HOLLOW_KNIGHT_PERSOS
+                            try: i["rarete"] = HOLLOW_KNIGHT_PERSOS[n].get("rarete", i.get("rarete"))
+                            except: pass
+                            
                         cartes.append((u, n, i))
     
     ordre = {"Légendaire": 1, "Ultra Rare": 2, "Super Rare": 3, "Rare": 4, "Peu Commun": 5, "Commun": 6}
