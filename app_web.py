@@ -324,7 +324,8 @@ def charger_collection():
     if os.path.exists(FICHIER_COLLECTION):
         with open(FICHIER_COLLECTION, "r", encoding="utf-8") as f:
             return json.load(f)
-    return {"Zelda": {}, "Hollow Knight": {}, "Pokémon": {}}
+    # On ajoute "jetons": 500 ici :
+    return {"jetons": 500, "Zelda": {}, "Hollow Knight": {}, "Pokémon": {}}
 
 def sauvegarder_collection(collection):
     with open(FICHIER_COLLECTION, "w", encoding="utf-8") as f:
@@ -356,7 +357,7 @@ def preparer_deck_memory(taille=12):
 # ==========================================
 collec = charger_collection()
 st.sidebar.markdown("## 🔴 Poké-Hub Web")
-st.sidebar.markdown(f"### 🪙 Solde : `{collec['jetons']} 🪙`")
+st.sidebar.markdown(f"### 🪙 Solde : `{collec.get('jetons', 500)} 🪙`")
 st.sidebar.markdown("---")
 mode_choisi = st.sidebar.radio(
     "🕹️ SÉLECTION DU MODE",
