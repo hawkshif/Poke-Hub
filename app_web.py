@@ -4,12 +4,16 @@ import random
 import os
 import base64
 import json
+import time
 from io import BytesIO
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
 import urllib.parse
+import datetime
 
-# Configuration de la page
+# ==========================================
+# ⚙️ CONFIGURATION DE LA PAGE
+# ==========================================
 st.set_page_config(page_title="Poké-Hub Web", page_icon="🎮", layout="wide")
 
 # ==========================================
@@ -26,112 +30,133 @@ st.markdown("""
         color: #f8fafc;
     }
 
+    /* Animations existantes */
     @keyframes pulse-egg {
         0% { transform: scale(1) translateY(0px); }
         50% { transform: scale(1.05) translateY(-5px); }
         100% { transform: scale(1) translateY(0px); }
     }
     .egg-anim {
-        text-align: center; 
-        margin: 15px 0;
-        animation: pulse-egg 2.5s infinite ease-in-out;
-        filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.4));
+        text-align: center; margin: 15px 0; animation: pulse-egg 2.5s infinite ease-in-out; filter: drop-shadow(0px 10px 15px rgba(0,0,0,0.4));
     }
 
+    /* Cartes des modes Qui est-ce */
     .game-card {
-        background: rgba(30, 41, 59, 0.5);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 16px;
-        padding: 15px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        text-align: center;
-        margin-bottom: 15px;
+        background: rgba(30, 41, 59, 0.5); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 15px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        text-align: center; margin-bottom: 15px;
     }
-    
-    .game-card:hover {
-        transform: translateY(-7px) scale(1.02);
-        border-color: rgba(255, 75, 75, 0.8);
-        box-shadow: 0 10px 25px rgba(255, 75, 75, 0.4);
-    }
-    .game-card-smash:hover {
-        border-color: rgba(56, 189, 248, 0.8);
-        box-shadow: 0 10px 25px rgba(56, 189, 248, 0.4);
-    }
-    .game-card-zelda:hover {
-        border-color: rgba(250, 204, 21, 0.8); 
-        box-shadow: 0 10px 25px rgba(250, 204, 21, 0.4);
-    }
-    .game-card-hk:hover {
-        border-color: rgba(148, 163, 184, 0.8);
-        box-shadow: 0 10px 25px rgba(148, 163, 184, 0.4);
-    }
-
+    .game-card:hover { transform: translateY(-7px) scale(1.02); border-color: rgba(255, 75, 75, 0.8); box-shadow: 0 10px 25px rgba(255, 75, 75, 0.4); }
+    .game-card-smash:hover { border-color: rgba(56, 189, 248, 0.8); box-shadow: 0 10px 25px rgba(56, 189, 248, 0.4); }
+    .game-card-zelda:hover { border-color: rgba(250, 204, 21, 0.8); box-shadow: 0 10px 25px rgba(250, 204, 21, 0.4); }
+    .game-card-hk:hover { border-color: rgba(148, 163, 184, 0.8); box-shadow: 0 10px 25px rgba(148, 163, 184, 0.4); }
     .game-card-eliminated {
-        background: rgba(15, 23, 42, 0.4);
-        border-radius: 16px;
-        padding: 15px;
-        text-align: center;
-        opacity: 0.25;
-        filter: grayscale(100%) contrast(1.2);
-        margin-bottom: 15px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        transition: all 0.3s ease;
+        background: rgba(15, 23, 42, 0.4); border-radius: 16px; padding: 15px; text-align: center;
+        opacity: 0.25; filter: grayscale(100%) contrast(1.2); margin-bottom: 15px; border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s ease;
     }
     
-    div.stButton > button {
-        border-radius: 12px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        transition: all 0.3s ease !important;
-    }
-    div.stButton > button:hover {
-        transform: scale(1.03);
-        box-shadow: 0px 5px 20px rgba(255, 255, 255, 0.15);
-    }
+    div.stButton > button { border-radius: 12px; font-weight: 600; letter-spacing: 0.5px; transition: all 0.3s ease !important; }
+    div.stButton > button:hover { transform: scale(1.03); box-shadow: 0px 5px 20px rgba(255, 255, 255, 0.15); }
     
+    /* Styles pour modes Blind Starters */
     .microscope-lens {
-        width: 140px; height: 140px; 
-        overflow: hidden; 
-        margin: 0 auto 20px auto; 
-        border: 6px solid #334155; 
-        border-radius: 50%; 
-        display: flex; align-items: center; justify-content: center; 
-        background-color: #0f172a; 
+        width: 140px; height: 140px; overflow: hidden; margin: 0 auto 20px auto; border: 6px solid #334155; 
+        border-radius: 50%; display: flex; align-items: center; justify-content: center; background-color: #0f172a; 
         box-shadow: inset 0px 0px 20px rgba(0,0,0,0.9), 0px 10px 20px rgba(0,0,0,0.5);
     }
-    
     .adn-container {
-        display: flex; height: 130px; width: 100%; 
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 12px 12px 0 0;
-        overflow: hidden;
-        box-shadow: inset 0px 5px 15px rgba(0,0,0,0.6);
+        display: flex; height: 130px; width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px 12px 0 0;
+        overflow: hidden; box-shadow: inset 0px 5px 15px rgba(0,0,0,0.6);
     }
     .lab-label {
-        background-color: rgba(15, 23, 42, 0.8); 
-        text-align: center; font-weight: bold; font-size: 13px; 
-        padding: 8px; font-family: 'Courier New', Courier, monospace; 
-        border: 1px solid rgba(255,255,255,0.1); border-top: none; 
-        border-radius: 0 0 12px 12px; margin-bottom: 15px;
-        letter-spacing: 2px;
+        background-color: rgba(15, 23, 42, 0.8); text-align: center; font-weight: bold; font-size: 13px; 
+        padding: 8px; font-family: 'Courier New', Courier, monospace; border: 1px solid rgba(255,255,255,0.1); 
+        border-top: none; border-radius: 0 0 12px 12px; margin-bottom: 15px; letter-spacing: 2px;
     }
-
     .w-box {
-        padding: 10px; border-radius: 8px; text-align: center;
-        font-weight: 700; color: white; margin-bottom: 6px; font-size: 14px;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.6);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        padding: 10px; border-radius: 8px; text-align: center; font-weight: 700; color: white; margin-bottom: 6px; 
+        font-size: 14px; text-shadow: 1px 1px 3px rgba(0,0,0,0.6); box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
     .w-green { background: linear-gradient(135deg, #16a34a, #22c55e); border: 1px solid #15803d; }
     .w-yellow { background: linear-gradient(135deg, #ca8a04, #eab308); border: 1px solid #a16207; }
     .w-red { background: linear-gradient(135deg, #dc2626, #ef4444); border: 1px solid #b91c1c; }
+
+    /* ==========================================
+       🃏 STYLES DES CARTES GACHA
+       ========================================== */
+    .gacha-card {
+        width: 260px;
+        height: 380px;
+        border-radius: 15px;
+        padding: 15px;
+        margin: 20px auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        background-color: #0f172a;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .gacha-card:hover {
+        transform: translateY(-10px) scale(1.05);
+    }
+    .gacha-img-container {
+        width: 100%;
+        height: 200px;
+        background-color: rgba(0,0,0,0.3);
+        border-radius: 10px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .gacha-img-container img {
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+        filter: drop-shadow(0px 8px 12px rgba(0,0,0,0.6));
+    }
+    .gacha-title { font-size: 22px; font-weight: 900; text-align: center; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; }
+    .gacha-universe { font-size: 12px; font-weight: bold; opacity: 0.8; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 5px;}
+    .gacha-stars { font-size: 18px; margin-bottom: 5px; text-shadow: 0 0 5px rgba(255, 255, 255, 0.5); }
+    
+    .rarity-C { border: 5px solid #94a3b8; color: #f8fafc; } 
+    .rarity-UC { border: 5px solid #22c55e; color: #22c55e; box-shadow: 0 0 20px rgba(34, 197, 94, 0.3); } 
+    .rarity-R { border: 5px solid #3b82f6; color: #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); } 
+    .rarity-SR { border: 5px solid #a855f7; color: #c084fc; box-shadow: 0 0 25px rgba(168, 85, 247, 0.5); } 
+    .rarity-UR { border: 5px solid #ef4444; color: #f87171; box-shadow: 0 0 30px rgba(239, 68, 68, 0.6); } 
+    .rarity-L { 
+        border: 5px solid #fbbf24; 
+        color: #fbbf24; 
+        background: linear-gradient(135deg, #0f172a 0%, #451a03 100%);
+        box-shadow: 0 0 40px rgba(251, 191, 36, 0.8), inset 0 0 20px rgba(251, 191, 36, 0.2); 
+    }
+    .mem-card {
+        aspect-ratio: 1/1; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center;
+        background: rgba(30, 41, 59, 0.8);
+        border: 2px solid #334155;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 10px;
+    }
+    [data-testid="stVerticalBlock"] > div {
+        display: flex;
+        flex-direction: column;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# --- AUTO-DÉTECTION DES DOSSIERS ---
+# ==========================================
+# 📂 AUTO-DÉTECTION DES DOSSIERS
+# ==========================================
 DOSSIER_DU_JEU = os.path.dirname(os.path.abspath(__file__))
 DOSSIER_PORTRAITS = os.path.join(DOSSIER_DU_JEU, "portraits")
 DOSSIER_PORTRAITS_ZELDA = os.path.join(DOSSIER_DU_JEU, "portraits_zelda")
@@ -160,64 +185,90 @@ def charger_donnees_externes():
         
     return zelda, hk
 
+# Variables globales (Dictionnaires)
 ZELDA_DATA, HOLLOW_KNIGHT_PERSOS = charger_donnees_externes()
 
 # --- DICTIONNAIRES POKÉMON ---
-TRAD_OEUFS = {
-    "monster": "🦖 Monstre", "water1": "💧 Eau 1", "bug": "🐛 Insectoïde",
-    "flying": "🌪️ Aérien", "ground": "🐾 Terrestre", "fairy": "✨ Féérique",
-    "plant": "🌿 Végétal", "humanshape": "👤 Humanoïde", "water3": "🦑 Eau 3",
-    "mineral": "🪨 Minéral", "indeterminate": "👻 Amorphe", "water2": "🐟 Eau 2",
-    "ditto": "🟣 Métamorph", "dragon": "🐲 Draconique", "no-eggs": "🚫 Aucun"
-}
-TRAD_STATS = {
-    "hp": "❤️ PV", "attack": "⚔️ Attaque", "defense": "🛡️ Défense",
-    "special-attack": "🔮 Att. Spé", "special-defense": "🔰 Déf. Spé", "speed": "⚡ Vitesse"
-}
-TRAD_TYPES = {
-    "normal": "Normal", "fire": "Feu", "water": "Eau", "electric": "Électrik", 
-    "grass": "Plante", "ice": "Glace", "fighting": "Combat", "poison": "Poison", 
-    "ground": "Sol", "flying": "Vol", "psychic": "Psy", "bug": "Insecte",
-    "rock": "Roche", "ghost": "Spectre", "dragon": "Dragon", "dark": "Ténèbres", 
-    "steel": "Acier", "fairy": "Fée"
-}
-GEN_RANGES = {
-    "1G (Kanto)": (1, 151), "2G (Johto)": (152, 251), "3G (Hoenn)": (252, 386),
-    "4G (Sinnoh)": (387, 493), "5G (Unys)": (494, 649), "6G (Kalos)": (650, 721),
-    "7G (Alola)": (722, 809), "8G (Galar)": (810, 905), "9G (Paldea)": (906, 1025)
-}
+TRAD_OEUFS = {"monster": "🦖 Monstre", "water1": "💧 Eau 1", "bug": "🐛 Insectoïde", "flying": "🌪️ Aérien", "ground": "🐾 Terrestre", "fairy": "✨ Féérique", "plant": "🌿 Végétal", "humanshape": "👤 Humanoïde", "water3": "🦑 Eau 3", "mineral": "🪨 Minéral", "indeterminate": "👻 Amorphe", "water2": "🐟 Eau 2", "ditto": "🟣 Métamorph", "dragon": "🐲 Draconique", "no-eggs": "🚫 Aucun"}
+TRAD_STATS = {"hp": "❤️ PV", "attack": "⚔️ Attaque", "defense": "🛡️ Défense", "special-attack": "🔮 Att. Spé", "special-defense": "🔰 Déf. Spé", "speed": "⚡ Vitesse"}
+TRAD_TYPES = {"normal": "Normal", "fire": "Feu", "water": "Eau", "electric": "Électrik", "grass": "Plante", "ice": "Glace", "fighting": "Combat", "poison": "Poison", "ground": "Sol", "flying": "Vol", "psychic": "Psy", "bug": "Insecte", "rock": "Roche", "ghost": "Spectre", "dragon": "Dragon", "dark": "Ténèbres", "steel": "Acier", "fairy": "Fée"}
+GEN_RANGES = {"1G (Kanto)": (1, 151), "2G (Johto)": (152, 251), "3G (Hoenn)": (252, 386), "4G (Sinnoh)": (387, 493), "5G (Unys)": (494, 649), "6G (Kalos)": (650, 721), "7G (Alola)": (722, 809), "8G (Galar)": (810, 905), "9G (Paldea)": (906, 1025)}
 
 # --- FONCTIONS TECHNIQUES ---
 def get_base64_image(img_path):
     with open(img_path, "rb") as file:
-        data = file.read()
-    return base64.b64encode(data).decode()
+        return base64.b64encode(file.read()).decode()
+    
+def get_base64_background(chemin_image):
+    """Convertit une image locale en base64 avec un chemin absolu sécurisé."""
+    # 1. Trouve le dossier exact où se trouve ton script Python
+    dossier_courant = os.path.dirname(os.path.abspath(__file__))
+    # 2. Colle ce dossier avec "bannieres/ton_image.jpg"
+    chemin_complet = os.path.join(dossier_courant, chemin_image)
+    
+    if os.path.exists(chemin_complet):
+        with open(chemin_complet, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    else:
+        # 3. Va afficher une erreur sur ton site avec le chemin exact recherché !
+        st.error(f"⚠️ Image introuvable au chemin exact : {chemin_complet}")
+        return ""
+
+def get_image_src_for_card(nom, univers):
+    """Récupère l'image au format src pour l'injecter dans la carte HTML"""
+    nom_u = urllib.parse.quote(nom)
+    if univers == "Zelda":
+        dossier = DOSSIER_PORTRAITS_ZELDA
+        color = "facc15"
+    else:
+        dossier = DOSSIER_PORTRAITS_HK
+        color = "94a3b8"
+        
+    if os.path.exists(dossier):
+        for ext in ['.png', '.jpg', '.jpeg', '.webp', '.PNG', '.JPG', '.JPEG']:
+            chemin = os.path.join(dossier, f"{nom}{ext}")
+            if os.path.exists(chemin):
+                return f"data:image/{ext.lower().replace('.', '')};base64,{get_base64_image(chemin)}"
+    # Avatar par défaut si image manquante
+    return f"https://ui-avatars.com/api/?name={nom_u}&background=0f172a&color={color}&rounded=true&bold=true&size=150"
 
 def get_zelda_image(nom, size=60, center=False):
     margin_style = "margin: 0 auto 5px auto; display: block;" if center else "margin-right: 12px;"
-    if os.path.exists(DOSSIER_PORTRAITS_ZELDA):
-        for ext in ['.png', '.jpg', '.jpeg', '.webp', '.PNG', '.JPG', '.JPEG']:
-            chemin_img = os.path.join(DOSSIER_PORTRAITS_ZELDA, f"{nom}{ext}")
-            if os.path.exists(chemin_img):
-                img_base64 = get_base64_image(chemin_img)
-                format_ext = ext.lower().replace('.', '')
-                return f"<img src='data:image/{format_ext};base64,{img_base64}' style='width:{size}px; height:{size}px; object-fit:contain; background-color:rgba(15, 23, 42, 0.8); border-radius:50%; border:2px solid #38bdf8; padding:4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); {margin_style}'>"
-    nom_u = urllib.parse.quote(nom)
-    avatar = f"https://ui-avatars.com/api/?name={nom_u}&background=0f172a&color=38bdf8&rounded=true&bold=true&size={size}"
-    return f"<img src='{avatar}' style='width:{size}px; border-radius:50%; border:2px solid #38bdf8; box-shadow: 0 4px 10px rgba(0,0,0,0.5); {margin_style}'>"
+    src = get_image_src_for_card(nom, "Zelda")
+    return f"<img src='{src}' style='width:{size}px; height:{size}px; object-fit:contain; background-color:rgba(15, 23, 42, 0.8); border-radius:50%; border:2px solid #38bdf8; padding:4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); {margin_style}'>"
 
 def get_hk_image(nom, size=60, center=False):
     margin_style = "margin: 0 auto 5px auto; display: block;" if center else "margin-right: 12px;"
-    if os.path.exists(DOSSIER_PORTRAITS_HK):
-        for ext in ['.png', '.jpg', '.jpeg', '.webp', '.PNG', '.JPG', '.JPEG']:
-            chemin_img = os.path.join(DOSSIER_PORTRAITS_HK, f"{nom}{ext}")
-            if os.path.exists(chemin_img):
-                img_base64 = get_base64_image(chemin_img)
-                format_ext = ext.lower().replace('.', '')
-                return f"<img src='data:image/{format_ext};base64,{img_base64}' style='width:{size}px; height:{size}px; object-fit:contain; background-color:rgba(15, 23, 42, 0.8); border-radius:50%; border:2px solid #94a3b8; padding:4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); {margin_style}'>"
-    nom_u = urllib.parse.quote(nom)
-    avatar = f"https://ui-avatars.com/api/?name={nom_u}&background=0f172a&color=94a3b8&rounded=true&bold=true&size={size}"
-    return f"<img src='{avatar}' style='width:{size}px; border-radius:50%; border:2px solid #94a3b8; box-shadow: 0 4px 10px rgba(0,0,0,0.5); {margin_style}'>"
+    src = get_image_src_for_card(nom, "Hollow Knight")
+    return f"<img src='{src}' style='width:{size}px; height:{size}px; object-fit:contain; background-color:rgba(15, 23, 42, 0.8); border-radius:50%; border:2px solid #94a3b8; padding:4px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); {margin_style}'>"
+
+def generer_carte_html(nom, image_src, rarete, univers):
+    """Usine de création de la carte au format HTML"""
+    config_rarete = {
+        "Commun": {"classe": "rarity-C", "etoiles": "⭐"},
+        "Peu Commun": {"classe": "rarity-UC", "etoiles": "⭐⭐"},
+        "Rare": {"classe": "rarity-R", "etoiles": "⭐⭐⭐"},
+        "Super Rare": {"classe": "rarity-SR", "etoiles": "⭐⭐⭐⭐"},
+        "Ultra Rare": {"classe": "rarity-UR", "etoiles": "⭐⭐⭐⭐⭐"},
+        "Légendaire": {"classe": "rarity-L", "etoiles": "🌟🌟🌟🌟🌟🌟"}
+    }
+    
+    style = config_rarete.get(rarete, config_rarete["Commun"])
+    
+    carte_html = f"""
+    <div class="gacha-card {style['classe']}">
+        <div class="gacha-universe">{univers}</div>
+        <div class="gacha-img-container">
+            <img src="{image_src}">
+        </div>
+        <div style="width: 100%;">
+            <div class="gacha-stars">{style['etoiles']}</div>
+            <div class="gacha-title">{nom}</div>
+            <div style="font-size: 11px; color: inherit; opacity: 0.8; text-transform: uppercase; text-align: center; margin-top: 5px; font-weight: bold;">{rarete}</div>
+        </div>
+    </div>
+    """
+    return carte_html
 
 @st.cache_data
 def charger_noms_fr():
@@ -249,11 +300,7 @@ def get_pokemon_wordle_data(p_id):
         type2 = TRAD_TYPES.get(types[1], types[1].capitalize()) if len(types) > 1 else "Aucun"
         gen_name = species["generation"]["name"]
         gen_dict = {"generation-i": 1, "generation-ii": 2, "generation-iii": 3, "generation-iv": 4, "generation-v": 5, "generation-vi": 6, "generation-vii": 7, "generation-viii": 8, "generation-ix": 9}
-        return {
-            "id": p_id, "nom": nom_fr, "image": data["sprites"]["front_default"],
-            "gen": gen_dict.get(gen_name, 1), "type1": type1, "type2": type2,
-            "taille": data["height"] / 10, "poids": data["weight"] / 10
-        }
+        return {"id": p_id, "nom": nom_fr, "image": data["sprites"]["front_default"], "gen": gen_dict.get(gen_name, 1), "type1": type1, "type2": type2, "taille": data["height"] / 10, "poids": data["weight"] / 10}
     except:
         return None
 
@@ -269,14 +316,56 @@ def extraire_adn_couleurs(image_url):
         return top_5
     except:
         return ["#ccc", "#999", "#666", "#333", "#000"]
+    
+    # --- SYSTÈME DE COLLECTION ---
+FICHIER_COLLECTION = os.path.join(DOSSIER_DU_JEU, "collection.json")
 
-# --- BARRE LATÉRALE DE NAVIGATION ---
+def charger_collection():
+    if os.path.exists(FICHIER_COLLECTION):
+        with open(FICHIER_COLLECTION, "r", encoding="utf-8") as f:
+            return json.load(f)
+    return {"Zelda": {}, "Hollow Knight": {}, "Pokémon": {}}
+
+def sauvegarder_collection(collection):
+    with open(FICHIER_COLLECTION, "w", encoding="utf-8") as f:
+        json.dump(collection, f, indent=4, ensure_ascii=False)
+        
+def ajouter_jetons(montant):
+    collec = charger_collection()
+    collec["jetons"] = collec.get("jetons", 500) + montant
+    sauvegarder_collection(collec)
+        
+def preparer_deck_memory(taille=12):
+    """Récupère des images aléatoires dans les dossiers pour faire des paires."""
+    chemins_images = []
+    # On scanne les dossiers pour trouver des images
+    for dossier in [DOSSIER_PORTRAITS_ZELDA, DOSSIER_PORTRAITS_HK]:
+        if os.path.exists(dossier):
+            for f in os.listdir(dossier):
+                if f.endswith(('.png', '.jpg', '.webp')):
+                    chemins_images.append(os.path.join(dossier, f))
+    
+    # On en choisit la moitié (pour faire les paires)
+    choix = random.sample(chemins_images, taille // 2)
+    deck = choix * 2
+    random.shuffle(deck)
+    return deck
+
+# ==========================================
+# 📊 BARRE LATÉRALE DE NAVIGATION
+# ==========================================
+collec = charger_collection()
 st.sidebar.markdown("## 🔴 Poké-Hub Web")
+st.sidebar.markdown(f"### 🪙 Solde : `{collec['jetons']} 🪙`")
 st.sidebar.markdown("---")
 mode_choisi = st.sidebar.radio(
     "🕹️ SÉLECTION DU MODE",
     [
         "🏠 Accueil", 
+        "🎰 Portail d'Invocation (Gacha)",
+        "🗂️ Mon Classeur (Collection)",
+        "🎫 Ticket à Gratter (Casino)",
+        "🃏 Memory des Héros (Jeu de Paires)",
         "👁️ Détecteur Sheikah (Zelda Wordle)",
         "🟩 Poké-Wordle (Déduction)",
         "🎒 Blind Starter (Audio)", 
@@ -305,11 +394,456 @@ if mode_choisi == "🏠 Accueil":
     
     col1, col2 = st.columns(2)
     with col1:
+        st.info("**🎰 Le Gacha Multivers**\n\nInvoque des cartes légendaires de tes licences préférées !")
         st.info("**👁️ Détecteur Sheikah (Zelda)**\n\nIdentifie le personnage ou monstre culte de la saga Zelda !")
-        st.info("**🟩 Poké-Wordle**\n\nDéduis le Pokémon secret grâce aux indices de Génération, Types, Taille et Poids.")
-        st.success("**🕵️‍♂️ 4x Modes Qui est-ce ?**\n\nUn véritable jeu de société interactif avec des grilles aléatoires sur Zelda, Hollow Knight, Pokémon et Smash Bros.")
+        st.info("**🟩 Poké-Wordle**\n\nDéduis le Pokémon secret grâce aux indices.")
+        st.success("**🕵️‍♂️ 4x Modes Qui est-ce ?**\n\nGrilles aléatoires sur Zelda, Hollow Knight, Pokémon et Smash Bros.")
     with col2:
         st.warning("**🎒 Les 6 Modes Blind Starter**\n\nDevine ton compagnon de route avec différentes mécaniques :\n* **Audio :** Reconnais son cri\n* **Pokédex :** À l'aide de son numéro national\n* **Statistiques :** Via sa meilleure stat de base\n* **Incubateur :** Selon son groupe d'œuf\n* **Zoom :** Son sprite grossi 9 fois\n* **Labo Scanners :** Analyse son ADN et sa silhouette")
+
+# ==========================================
+# 🎰 MODE : GACHA (PORTAIL D'INVOCATION)
+# ==========================================
+elif mode_choisi == "🎰 Portail d'Invocation (Gacha)":
+    collec = charger_collection()
+    
+    # --- CALCUL DU PORTAIL BOOSTÉ DU JOUR (Rotation automatique toutes les 24h) ---
+    univers_dispos = ["Zelda", "Hollow Knight", "Pokémon"]
+    jour_de_l_an = datetime.date.today().timetuple().tm_yday
+    univers_booste = univers_dispos[jour_de_l_an % len(univers_dispos)]
+    
+    # --- 1. SÉLECTION DU PORTAIL (Avec indicateur visuel de boost) ---
+    label_zelda = "Portail Zelda 🧝‍♂️" + (" 🔥 BOOSTÉ !" if univers_booste == "Zelda" else "")
+    label_hk = "Portail Hollow Knight 🪲" + (" 🔥 BOOSTÉ !" if univers_booste == "Hollow Knight" else "")
+    label_pkmn = "Portail Pokémon 🔴" + (" 🔥 BOOSTÉ !" if univers_booste == "Pokémon" else "")
+    
+    univers_choisi = st.selectbox(
+        "Choisissez votre portail :", 
+        ["Mélange Multivers 🌌", label_zelda, label_hk, label_pkmn]
+    )
+    
+    # --- 2. DÉTERMINATION DU PORTAIL SÉLECTIONNÉ ---
+    if "Zelda" in univers_choisi:
+        est_booste = (univers_booste == "Zelda")
+        titre = "🌿 PORTAIL D'HYRULE 🗡️" + (" 🔥 BOOSTÉ 🔥" if est_booste else "")
+        desc = "Invoquez les héros et créatures du royaume d'Hyrule !"
+        chemin_bg = "bannieres/zelda_bg.jpg"
+        bord = "#22c55e" if not est_booste else "#facc15" # Bordure dorée si boosté
+    elif "Hollow Knight" in univers_choisi:
+        est_booste = (univers_booste == "Hollow Knight")
+        titre = "🕸️ PORTAIL D'HALLOWNEST 🪲" + (" 🔥 BOOSTÉ 🔥" if est_booste else "")
+        desc = "Réveillez les insectes et les ombres du royaume déchu !"
+        chemin_bg = "bannieres/hk_bg.jpg"
+        bord = "#64748b" if not est_booste else "#facc15"
+    elif "Pokémon" in univers_choisi:
+        est_booste = (univers_booste == "Pokémon")
+        titre = "🔴 PORTAIL POKÉMON ⚪" + (" 🔥 BOOSTÉ 🔥" if est_booste else "")
+        desc = "Attrapez-les tous ! Invoquez des créatures de toutes générations."
+        chemin_bg = "bannieres/pokemon_bg.jpg"
+        bord = "#f87171" if not est_booste else "#facc15"
+    else:
+        est_booste = False
+        titre = "🌌 PORTAIL DU MULTIVERS 🌌"
+        desc = "Invoquez les héros les plus puissants des mondes oubliés !"
+        chemin_bg = "bannieres/multivers_bg.jpg"
+        bord = "#a855f7"
+
+    # Affichage des taux dynamiques dans la bannière
+    taux_txt = "✨ Légendaire : 2% | Ultra Rare : 12% (🔥 TAUX DOUBLÉS !)" if est_booste else "✨ Légendaire : 1% | Ultra Rare : 6% | Super Rare : 15%"
+
+    # Conversion et affichage de la bannière
+    bg_b64 = get_base64_background(chemin_bg)
+    fond_css = f"url('data:image/jpeg;base64,{bg_b64}')" if bg_b64 else "#0f172a"
+
+    st.markdown(f"""
+        <div style="background-image: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.75)), {fond_css}; 
+                    background-size: cover; background-position: center;
+                    padding: 30px; border-radius: 20px; text-align: center; color: white; 
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 3px solid {bord}; margin-bottom: 25px;">
+            <h1 style="margin:0; font-size: 35px; text-shadow: 0 0 15px {bord};">{titre}</h1>
+            <p style="color: #f1f5f9; font-size: 18px; margin-top: 10px;">{desc}</p>
+            <div style="margin-top: 15px; font-size: 14px; background: rgba(0,0,0,0.6); display: inline-block; padding: 6px 20px; border-radius: 30px; border: 1px solid {bord}; font-weight: bold;">
+                {taux_txt}
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    st.write(f"🪙 **Solde actuel :** `{collec.get('jetons', 0)} Jetons`")
+    
+    # --- 3. BOUTONS ---
+    c1, c2 = st.columns(2)
+    with c1:
+        btn_1 = st.button("🌟 TIRAGE UNIQUE (100 🪙)", use_container_width=True)
+    with c2:
+        btn_5 = st.button("💫 MULTI-TIRAGE x5 (500 🪙)", use_container_width=True, type="primary")
+
+    zone_resultats = st.empty()
+
+    # --- 4. LOGIQUE DES TIRAGES ---
+    if btn_1 or btn_5:
+        nb_tirages = 5 if btn_5 else 1
+        cout = nb_tirages * 100
+        
+        if collec.get('jetons', 0) < cout:
+            st.error(f"❌ Fonds insuffisants ! Il vous faut {cout} 🪙.")
+        else:
+            ajouter_jetons(-cout)
+            collec = charger_collection()
+            
+            with zone_resultats.container():
+                with st.spinner("Invocation en cours..."):
+                    cols_resultat = st.columns(nb_tirages)
+                    il_y_a_du_lourd = False
+
+                    for i in range(nb_tirages):
+                        # Détermination de l'univers pour ce tirage précis
+                        if "Mélange Multivers" in univers_choisi:
+                            univers_tire = random.choice(["Zelda", "Hollow Knight", "Pokémon"])
+                            # Le mélange profite du boost si l'univers choisi au hasard est celui du jour !
+                            tirage_est_booste = (univers_tire == univers_booste)
+                        else:
+                            univers_tire = univers_booste if est_booste else univers_choisi.replace("Portail ", "").replace(" 🧝‍♂️", "").replace(" 🪲", "").replace(" 🔴", "")
+                            tirage_est_booste = est_booste
+
+                        if univers_tire in ["Zelda", "Hollow Knight"]:
+                            jet = random.randint(1, 100)
+                            
+                            # ⚖️ APPLICATION DES TAUX (Doublés si boosté)
+                            if tirage_est_booste:
+                                if jet <= 2: rarete_cible = "Légendaire"       # 2% au lieu de 1%
+                                elif jet <= 12: rarete_cible = "Ultra Rare"    # 10% de + (total 12%)
+                                elif jet <= 25: rarete_cible = "Super Rare"
+                                elif jet <= 45: rarete_cible = "Rare"
+                                elif jet <= 70: rarete_cible = "Peu Commun"
+                                else: rarete_cible = "Commun"
+                            else:
+                                if jet <= 1: rarete_cible = "Légendaire"
+                                elif jet <= 6: rarete_cible = "Ultra Rare"
+                                elif jet <= 15: rarete_cible = "Super Rare"
+                                elif jet <= 30: rarete_cible = "Rare"
+                                elif jet <= 60: rarete_cible = "Peu Commun"
+                                else: rarete_cible = "Commun"
+
+                            bdd = ZELDA_DATA if univers_tire == "Zelda" else HOLLOW_KNIGHT_PERSOS
+                            candidats = [n for n, d in bdd.items() if d.get("rarete", "Commun") == rarete_cible]
+                            if not candidats: candidats = list(bdd.keys())
+                            nom_tire = random.choice(candidats)
+                            rarete_finale = bdd[nom_tire].get("rarete", "Commun")
+                            img_src = get_image_src_for_card(nom_tire, univers_tire)
+                        else:
+                            # Tirage Pokémon
+                            p_id = random.randint(1, 1025)
+                            try:
+                                d_pkmn = requests.get(f"https://pokeapi.co/api/v2/pokemon/{p_id}").json()
+                                s_pkmn = requests.get(f"https://pokeapi.co/api/v2/pokemon-species/{p_id}").json()
+                                nom_tire = next(e["name"] for e in s_pkmn["names"] if e["language"]["name"] == "fr")
+                                img_src = d_pkmn["sprites"]["other"]["official-artwork"]["front_default"] or d_pkmn["sprites"]["front_default"]
+                                
+                                is_leg = s_pkmn.get("is_legendary", False) or s_pkmn.get("is_mythical", False)
+                                bst = sum([s["base_stat"] for s in d_pkmn["stats"]])
+                                
+                                # Si le portail Pokémon est boosté, on baisse les requis de statistiques !
+                                if tirage_est_booste:
+                                    if is_leg or random.randint(1, 50) == 1: rarete_finale = "Légendaire" # Chance brute en plus
+                                    elif bst >= 550: rarete_finale = "Ultra Rare"
+                                    elif bst >= 450: rarete_finale = "Super Rare"
+                                    elif bst >= 350: rarete_finale = "Rare"
+                                    else: rarete_finale = "Commun"
+                                else:
+                                    if is_leg: rarete_finale = "Légendaire"
+                                    elif bst >= 600: rarete_finale = "Ultra Rare"
+                                    elif bst >= 500: rarete_finale = "Super Rare"
+                                    elif bst >= 400: rarete_finale = "Rare"
+                                    elif bst >= 300: rarete_finale = "Peu Commun"
+                                    else: rarete_finale = "Commun"
+                            except:
+                                nom_tire = "Erreur Pokémon"; img_src = ""; rarete_finale = "Commun"
+
+                        # Enregistrement
+                        if univers_tire not in collec: collec[univers_tire] = {}
+                        if nom_tire in collec[univers_tire]:
+                            collec[univers_tire][nom_tire]["quantite"] += 1
+                        else:
+                            collec[univers_tire][nom_tire] = {"rarete": rarete_finale, "image": img_src, "quantite": 1}
+                        
+                        if rarete_finale in ["Ultra Rare", "Légendaire"]: il_y_a_du_lourd = True
+
+                        # Affichage des cartes invoquées
+                        with cols_resultat[i]:
+                            carte_html = generer_carte_html(nom_tire, img_src, rarete_finale, univers_tire)
+                            st.markdown(f"<div style='transform: scale(0.85); margin: -20px 0;'>{carte_html}</div>", unsafe_allow_html=True)
+                            st.caption(f"**{nom_tire}** ({rarete_finale})")
+
+                    sauvegarder_collection(collec)
+                    
+                    if il_y_a_du_lourd: st.balloons()
+                    st.success(f"🎉 Invocation terminée ! Nouveau solde : {collec['jetons']} 🪙")
+            
+# ==========================================
+# 🗂️ MODE : MON CLASSEUR (COLLECTION)
+# ==========================================
+elif mode_choisi == "🗂️ Mon Classeur (Collection)":
+    st.title("🗂️ Classeur Multivers")
+    collec = charger_collection()
+    
+    # Statistiques
+    cartes_uniques = 0
+    for u, p in collec.items():
+        if isinstance(p, dict): cartes_uniques += len(p)
+    
+    st.write(f"Vous possédez **{cartes_uniques}** cartes uniques différentes.")
+    st.divider()
+    
+    f_univ = st.radio("Afficher l'univers :", ["Tous", "Zelda", "Hollow Knight", "Pokémon"], horizontal=True)
+    
+    # Extraction sécurisée
+    cartes = []
+    for u, p in collec.items():
+        if u != "jetons" and isinstance(p, dict):
+            if f_univ == "Tous" or f_univ == u:
+                for n, i in p.items():
+                    # i doit être un dictionnaire. Si ce n'est pas le cas, on ignore
+                    if isinstance(i, dict):
+                        cartes.append((u, n, i))
+    
+    ordre = {"Légendaire": 1, "Ultra Rare": 2, "Super Rare": 3, "Rare": 4, "Peu Commun": 5, "Commun": 6}
+    cartes.sort(key=lambda x: (ordre.get(x[2].get("rarete", "Commun"), 7), x[1]))
+    
+    if not cartes:
+        st.warning("📭 Classeur vide ! Allez invoquer des cartes.")
+    else:
+        cols = st.columns(4)
+        for idx, (u, n, i) in enumerate(cartes):
+            with cols[idx % 4]:
+                # Extraction sécurisée des données de la carte
+                img_src = i.get("image", "")
+                rarete = i.get("rarete", "Commun")
+                qte = i.get("quantite", 1)
+                
+                # Génération HTML avec fallback si image manquante
+                html = generer_carte_html(n, img_src, rarete, u)
+                badge = f"<div style='background-color:#ef4444; color:white; border-radius:50%; width:30px; height:30px; display:flex; justify-content:center; align-items:center; font-weight:bold; position:absolute; z-index:10; right:10px; top:10px; box-shadow:0 4px 6px rgba(0,0,0,0.5);'>x{qte}</div>"
+                st.markdown(f"<div style='position:relative; display:flex; justify-content:center; transform: scale(0.85); margin: -20px;'>{badge}{html}</div>", unsafe_allow_html=True)
+
+# ==========================================
+# 🎫 TICKET À GRATTER (CASINO)
+# ==========================================
+elif mode_choisi == "🎫 Ticket à Gratter (Casino)":
+    st.title("🎫 Le Gratte-Gratte du Multivers")
+    st.write("Trouvez les 3 💎 pour le Jackpot (+300 🪙) ! La 💣 vous fait perdre 2 coups d'un coup. Vous avez **8 coups maximum**.")
+    
+    # 🎨 INJECTION CSS
+    st.markdown("""
+        <style>
+        button[kind="secondary"] {
+            height: 120px !important;
+            font-size: 40px !important;
+            border-radius: 16px !important;
+            background-color: rgba(30, 41, 59, 0.5) !important;
+            border: 2px dashed rgba(255, 255, 255, 0.2) !important;
+            transition: all 0.2s ease !important;
+        }
+        button[kind="secondary"]:hover {
+            background-color: rgba(30, 41, 59, 0.8) !important;
+            border-color: #facc15 !important;
+            transform: scale(1.02) !important;
+        }
+        .scratch-revealed {
+            height: 120px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+            margin-bottom: 16px;
+        }
+        .diamant { background: linear-gradient(135deg, #0284c7, #38bdf8); border: 2px solid #7dd3fc; }
+        .piece { background: linear-gradient(135deg, #ca8a04, #facc15); border: 2px solid #fef08a; }
+        .bombe { background: linear-gradient(135deg, #991b1b, #ef4444); border: 2px solid #fca5a5; }
+        div[data-testid="stMarkdownContainer"] p { margin-bottom: 0 !important; }
+        </style>
+    """, unsafe_allow_html=True)
+
+    collec = charger_collection()
+    PRIX_TICKET = 50
+    
+    st.markdown(f"**Solde actuel :** `{collec.get('jetons', 0)} 🪙`")
+    st.divider()
+
+    if "scratch_grid" not in st.session_state:
+        # Grille 12 cases : 3 Diamants, 1 Bombe, 8 Pièces.
+        st.session_state.scratch_grid = ["💎", "💎", "💎", "💣", "🪙", "🪙", "🪙", "🪙", "🪙", "🪙", "🪙", "🪙"]
+        random.shuffle(st.session_state.scratch_grid)
+        st.session_state.scratch_rev = [False] * 12
+        st.session_state.scratch_coups_restants = 8  # <-- Changé ici à 8
+        st.session_state.scratch_diamants = 0
+        st.session_state.scratch_over = False
+        st.session_state.scratch_bombe_hit = False
+
+    grid = st.session_state.scratch_grid
+    rev = st.session_state.scratch_rev
+    coups = st.session_state.scratch_coups_restants
+    diams = st.session_state.scratch_diamants
+
+    # Zone de statut au-dessus de la grille
+    if not st.session_state.scratch_over:
+        c1, c2 = st.columns(2)
+        c1.info(f"👉 Coups restants : **{max(0, coups)}** / 8")  # <-- Changé ici à 8
+        c2.warning(f"💎 Diamants trouvés : **{diams}** / 3")
+    else:
+        if diams == 3:
+            st.success("🎉 JACKPOT ! Vous avez trouvé les 3 Diamants ! (+300 🪙)")
+            st.balloons()
+        elif st.session_state.scratch_bombe_hit:
+            st.warning("💥 Ticket terminé ! La bombe a soufflé vos derniers coups, mais vous gardez vos pièces.")
+        else:
+            st.info("Ticket terminé ! Plus de coups disponibles. Vous conservez vos pièces grattées.")
+            
+        if st.button(f"Acheter un nouveau ticket ({PRIX_TICKET} 🪙) 🔄", type="primary"):
+            if collec.get("jetons", 0) >= PRIX_TICKET:
+                ajouter_jetons(-PRIX_TICKET) 
+                del st.session_state.scratch_grid
+                st.rerun()
+            else:
+                st.error("Fonds insuffisants pour racheter un ticket.")
+
+    # Affichage de la grille 3x4
+    for row in range(3):
+        cols = st.columns(4)
+        for col in range(4):
+            idx = row * 4 + col
+            with cols[col]:
+                if rev[idx] or st.session_state.scratch_over:
+                    opacity = "1" if rev[idx] else "0.3"
+                    if grid[idx] == "💎":
+                        st.markdown(f"<div class='scratch-revealed diamant' style='opacity:{opacity};'>💎</div>", unsafe_allow_html=True)
+                    elif grid[idx] == "💣":
+                        st.markdown(f"<div class='scratch-revealed bombe' style='opacity:{opacity};'>💣</div>", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"<div class='scratch-revealed piece' style='opacity:{opacity};'>🪙</div>", unsafe_allow_html=True)
+                else:
+                    if st.button("❓", key=f"scr_{idx}", use_container_width=True, disabled=st.session_state.scratch_over):
+                        st.session_state.scratch_rev[idx] = True
+                        st.session_state.scratch_coups_restants -= 1
+                        
+                        # Logique des cases
+                        if grid[idx] == "💣":
+                            st.session_state.scratch_bombe_hit = True
+                            st.session_state.scratch_coups_restants -= 2
+                            st.toast("💥 Aïe ! La bombe vous fait perdre 2 coups supplémentaires !")
+                        elif grid[idx] == "💎":
+                            st.session_state.scratch_diamants += 1
+                            if st.session_state.scratch_diamants == 3:
+                                ajouter_jetons(300)
+                                st.session_state.scratch_over = True
+                        elif grid[idx] == "🪙":
+                            ajouter_jetons(10)
+                            
+                        # Vérification de fin de jeu
+                        if st.session_state.scratch_coups_restants <= 0:
+                            st.session_state.scratch_coups_restants = 0
+                            st.session_state.scratch_over = True
+                            
+                        st.rerun()
+                        
+# ==========================================
+# 🃏 MEMORY DES HÉROS (JEU DE PAIRES)
+# ==========================================
+elif mode_choisi == "🃏 Memory des Héros (Jeu de Paires)":
+    st.title("🃏 Memory des Héros")
+    
+    # 🎨 INJECTION CSS 
+    st.markdown("""
+        <style>
+        /* Force la taille de TOUS les boutons des cartes (dos) */
+        button[kind="secondary"] {
+            height: 140px !important;
+            width: 100% !important;
+            border-radius: 16px !important;
+            background-color: rgba(30, 41, 59, 0.5) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            font-size: 50px !important;
+            box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3) !important;
+            transition: all 0.2s ease !important;
+        }
+        button[kind="secondary"]:hover {
+            border-color: #38bdf8 !important;
+            transform: scale(1.02) !important;
+            background-color: rgba(30, 41, 59, 0.8) !important;
+        }
+        /* Supprime les marges parasites de Streamlit sous le HTML */
+        div[data-testid="stMarkdownContainer"] p {
+            margin-bottom: 0 !important;
+        }
+        /* Classe CSS pour la carte retournée (face) */
+        .mem-card-face {
+            height: 140px; 
+            width: 100%; 
+            border-radius: 16px; 
+            background: rgba(30, 41, 59, 0.5); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            box-shadow: 0 8px 32px 0 rgba(0,0,0,0.3); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow: hidden;
+            box-sizing: border-box;
+            margin-bottom: 16px; /* <-- LA CORRECTION : Ajoute l'espacement entre les lignes ! */
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+    collec = charger_collection()
+    
+    if "mem_grid" not in st.session_state:
+        st.session_state.mem_grid = preparer_deck_memory(taille=16)
+        st.session_state.mem_rev = [False] * 16
+        st.session_state.mem_picks = []
+
+    grid, rev, picks = st.session_state.mem_grid, st.session_state.mem_rev, st.session_state.mem_picks
+
+    cols = st.columns(4)
+    
+    for i in range(16):
+        with cols[i % 4]:
+            if rev[i]:
+                img_b64 = get_base64_image(grid[i])
+                # La face de la carte
+                st.markdown(f"""
+                    <div class='mem-card-face'>
+                        <img src='data:image/png;base64,{img_b64}' style='max-width: 90%; max-height: 90%; object-fit: contain; filter: drop-shadow(0px 5px 10px rgba(0,0,0,0.5));'>
+                    </div>
+                """, unsafe_allow_html=True)
+            else:
+                # Le dos de la carte
+                if st.button("🎴", key=f"mem_{i}", use_container_width=True, disabled=(len(picks) >= 2)):
+                    st.session_state.mem_rev[i] = True
+                    st.session_state.mem_picks.append(i)
+                    st.rerun()
+
+    # Logique de vérification
+    if len(picks) == 2:
+        time.sleep(1.5) 
+        idx1, idx2 = picks[0], picks[1]
+        if grid[idx1] == grid[idx2]:
+            st.toast("✅ Paire trouvée ! (+20 🪙)")
+            ajouter_jetons(20)
+        else:
+            st.toast("❌ Ce n'est pas une paire...")
+            st.session_state.mem_rev[idx1] = False
+            st.session_state.mem_rev[idx2] = False
+            
+        st.session_state.mem_picks = []
+        st.rerun()
+
+    st.divider()
+    # Le bouton "Relancer" reste normal car il a l'attribut type="primary"
+    if st.button("Relancer la partie 🔄", type="primary"):
+        del st.session_state.mem_grid
+        del st.session_state.mem_rev
+        del st.session_state.mem_picks
+        st.rerun()
 
 # ==========================================
 # 👁️ MODE : DÉTECTEUR SHEIKAH (ZELDA WORDLE)
@@ -322,7 +856,6 @@ elif mode_choisi == "👁️ Détecteur Sheikah (Zelda Wordle)":
     if not os.path.exists(DOSSIER_PORTRAITS_ZELDA):
         st.info("💡 Astuce : Créez un dossier 'portraits_zelda' contenant les images de vos personnages pour remplacer les avatars !")
 
-    # Protection dictionnaire
     tous_les_zelda = list(ZELDA_DATA.keys()) if isinstance(ZELDA_DATA, dict) else []
 
     if "z_secret_name" not in st.session_state:
@@ -413,7 +946,7 @@ elif mode_choisi == "👁️ Détecteur Sheikah (Zelda Wordle)":
 elif mode_choisi == "🟩 Poké-Wordle (Déduction)":
     st.title("🟩 Le Poké-Wordle")
     st.write("Trouvez le Pokémon secret ! Tapez un nom, et des indices colorés vous guideront.")
-    st.caption("Couleurs : 🟩 = Parfait | 🟨 = Mauvaise position (Type) | 🟥 = Incorrect. Flèches : 🔼 Le secret est plus grand/lourd | 🔽 Le secret est plus petit/léger.")
+    st.caption("Couleurs : 🟩 = Parfait | 🟨 = Mauvaise position (Type) | 🟥 = Incorrect.")
 
     gens_choisies = st.multiselect("Sélectionnez les générations à inclure :", list(GEN_RANGES.keys()), default=["1G (Kanto)"])
 
@@ -454,28 +987,15 @@ elif mode_choisi == "🟩 Poké-Wordle (Déduction)":
                                 if guess_id == st.session_state.wordle_secret:
                                     st.session_state.wordle_gagne = True
                         st.rerun()
-                    else:
-                        st.error("Veuillez choisir un Pokémon dans la liste !")
-
-            with st.expander("💡 Besoin d'un indice ?"):
-                if len(st.session_state.wordle_essais) >= 5:
-                    st.write(f"La première lettre du Pokémon est : **{secret['nom'][0].upper()}**")
-                    st.write(f"La dernière lettre est : **{secret['nom'][-1].upper()}**")
-                elif len(st.session_state.wordle_essais) >= 3:
-                    st.write(f"La première lettre du Pokémon est : **{secret['nom'][0].upper()}**")
-                    st.write("*(Faites 5 essais pour débloquer le prochain indice)*")
-                else:
-                    st.write("Faites au moins 3 essais pour débloquer le premier indice !")
 
         if st.session_state.wordle_gagne:
             st.balloons()
-            st.success(f"🏆 INCROYABLE ! Vous avez trouvé **{secret['nom']}** en {len(st.session_state.wordle_essais)} essai(s) !")
+            st.success(f"🏆 INCROYABLE ! Vous avez trouvé **{secret['nom']}** !")
             if st.button("Relancer une partie avec ces filtres 🔄"):
                 del st.session_state.wordle_secret
                 st.rerun()
 
         st.divider()
-        
         if st.session_state.wordle_essais:
             h1, h2, h3, h4, h5 = st.columns([2, 1, 2, 1.5, 1.5])
             with h1: st.write("**Pokémon**");
@@ -890,7 +1410,7 @@ elif mode_choisi == "🕵️‍♂️ Qui est-ce ? (Pokémon)":
                 else:
                     st.markdown(f"""<div class="game-card"><img src="{p["image"]}" width="90"><p style="color: #ff4b4b; margin-bottom: 0;">{p["nom"]}</p></div>""", unsafe_allow_html=True)
                     if st.button("❌ Éliminer", key=f"elim_{idx}", use_container_width=True): st.session_state.pokemon_elimines.append(p["nom"]); st.rerun()
-                    
+
 elif mode_choisi == "⚔️ Qui est-ce ? (Smash Bros)":
     st.title("⚔️ Le Plateau Qui est-ce ? (Smash Bros)")
     if os.path.exists(DOSSIER_PORTRAITS):
@@ -985,7 +1505,6 @@ elif mode_choisi == "🪲 Qui est-ce ? (Hollow Knight)":
     if not os.path.exists(DOSSIER_PORTRAITS_HK):
         st.info("💡 Astuce : Créez un dossier 'portraits_hk' contenant les images de vos personnages pour remplacer les avatars !")
 
-    # Sécurité pour transformer le dictionnaire en liste de noms
     if isinstance(HOLLOW_KNIGHT_PERSOS, dict):
         tous_les_hk = list(HOLLOW_KNIGHT_PERSOS.keys())
     elif isinstance(HOLLOW_KNIGHT_PERSOS, list):
