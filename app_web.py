@@ -641,7 +641,7 @@ elif mode_choisi == "🎰 Portail d'Invocation (Gacha)":
                                 # On n'applique le test que si c'est un Légendaire OU un Évolué
                                 if is_leg or is_evolved:
                                     # Ici : 1 chance sur 20 (5% de chance). Tu peux changer le 20 pour ajuster la rareté !
-                                    if random.randint(1, 50) == 1:
+                                    if random.randint(1, 20) == 1:
                                         rarete_finale = "Shiny ✨"
                                         # On remplace l'image normale par l'artwork officiel Shiny !
                                         img_src = d_pkmn["sprites"]["other"]["official-artwork"]["shiny"] or d_pkmn["sprites"]["front_shiny"] or img_src
