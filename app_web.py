@@ -613,14 +613,19 @@ elif mode_choisi == "🎰 Portail d'Invocation (Gacha)":
                                 d_pkmn = requests.get(f"https://pokeapi.co/api/v2/pokemon/{p_id}").json()
                                 s_pkmn = requests.get(f"https://pokeapi.co/api/v2/pokemon-species/{p_id}").json()
                                 nom_tire = next(e["name"] for e in s_pkmn["names"] if e["language"]["name"] == "fr")
-                                img_src = d_pkmn["sprites"]["other"]["official-artwork"]["front_default"] or d_pkmn["sprites"]["front_default"]
+                                
+                                # 🛡️ Extraction ultra-sécurisée des images
+                                sprites = d_pkmn.get("sprites") or {}
+                                sprites_other = sprites.get("other") or {}
+                                off_art = sprites_other.get("official-artwork") or {}
+                                
+                                img_src = off_art.get("front_default") or sprites.get("front_default") or ""
                                 
                                 is_leg = s_pkmn.get("is_legendary", False) or s_pkmn.get("is_mythical", False)
-                                # 🪺 Détection : Est-ce un Pokémon évolué ? (S'il évolue d'une autre espèce)
                                 is_evolved = s_pkmn.get("evolves_from_species") is not None
-                                bst = sum([s["base_stat"] for s in d_pkmn["stats"]])
+                                bst = sum([s.get("base_stat", 0) for s in d_pkmn.get("stats", [])])
                                 
-                                # Détermination de la rareté de base
+                                # ⚖️ Détermination de la rareté de base
                                 if tirage_est_booste:
                                     if is_leg or random.randint(1, 50) == 1: rarete_finale = "Légendaire"
                                     elif bst >= 550: rarete_finale = "Ultra Rare"
@@ -636,19 +641,23 @@ elif mode_choisi == "🎰 Portail d'Invocation (Gacha)":
                                     else: rarete_finale = "Commun"
 
                                 # ==========================================
-                                # 🌟 LOGIQUE SHINY SÉLECTIVE ✨
+                                # 🌟 LOGIQUE SHINY SÉLECTIVE ✨ (1 CHANCE SUR 20)
                                 # ==========================================
-                                # On n'applique le test que si c'est un Légendaire OU un Évolué
                                 if is_leg or is_evolved:
-                                    # Ici : 1 chance sur 20 (5% de chance). Tu peux changer le 20 pour ajuster la rareté !
                                     if random.randint(1, 20) == 1:
                                         rarete_finale = "Shiny ✨"
-                                        # On remplace l'image normale par l'artwork officiel Shiny !
-                                        img_src = d_pkmn["sprites"]["other"]["official-artwork"]["shiny"] or d_pkmn["sprites"]["front_shiny"] or img_src
-                                        # On change son nom pour créer une carte unique dans la base de données
+                                        
+                                        # On utilise .get() en toute sécurité pour chercher l'image
+                                        img_shiny = off_art.get("front_shiny") or sprites.get("front_shiny")
+                                        
+                                        # On ne remplace l'image que si elle existe vraiment chez Nintendo
+                                        if img_shiny:
+                                            img_src = img_shiny
+                                            
                                         nom_tire = f"{nom_tire} ✨"
 
-                            except:
+                            except Exception:
+                                # Le parachute de secours
                                 nom_tire = "Erreur Pokémon"; img_src = ""; rarete_finale = "Commun"
 
                         # Enregistrement
