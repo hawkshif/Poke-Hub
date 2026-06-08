@@ -137,6 +137,12 @@ st.markdown("""
         background: linear-gradient(135deg, #0f172a 0%, #451a03 100%);
         box-shadow: 0 0 40px rgba(251, 191, 36, 0.8), inset 0 0 20px rgba(251, 191, 36, 0.2); 
     }
+    .rarity-SHINY {
+            background: linear-gradient(145deg, #2e1065, #0f172a) !important;
+            border: 2px solid #fde047 !important;
+            box-shadow: 0 0 25px rgba(253, 224, 71, 0.6), inset 0 0 15px rgba(168, 85, 247, 0.4) !important;
+            color: #fef08a !important;
+        }
     .mem-card {
         aspect-ratio: 1/1; 
         display: flex; 
@@ -269,7 +275,8 @@ def generer_carte_html(nom, image_src, rarete, univers):
         "Rare": {"classe": "rarity-R", "etoiles": "⭐⭐⭐"},
         "Super Rare": {"classe": "rarity-SR", "etoiles": "⭐⭐⭐⭐"},
         "Ultra Rare": {"classe": "rarity-UR", "etoiles": "⭐⭐⭐⭐⭐"},
-        "Légendaire": {"classe": "rarity-L", "etoiles": "🌟🌟🌟🌟🌟🌟"}
+        "Légendaire": {"classe": "rarity-L", "etoiles": "🌟🌟🌟🌟🌟🌟"},
+        "Shiny ✨": {"classe": "rarity-SHINY", "etoiles": "🌟🌟🌟🌟🌟🌟✨"}
     }
     
     style = config_rarete.get(rarete, config_rarete["Commun"])
@@ -609,11 +616,13 @@ elif mode_choisi == "🎰 Portail d'Invocation (Gacha)":
                                 img_src = d_pkmn["sprites"]["other"]["official-artwork"]["front_default"] or d_pkmn["sprites"]["front_default"]
                                 
                                 is_leg = s_pkmn.get("is_legendary", False) or s_pkmn.get("is_mythical", False)
+                                # 🪺 Détection : Est-ce un Pokémon évolué ? (S'il évolue d'une autre espèce)
+                                is_evolved = s_pkmn.get("evolves_from_species") is not None
                                 bst = sum([s["base_stat"] for s in d_pkmn["stats"]])
                                 
-                                # Si le portail Pokémon est boosté, on baisse les requis de statistiques !
+                                # Détermination de la rareté de base
                                 if tirage_est_booste:
-                                    if is_leg or random.randint(1, 50) == 1: rarete_finale = "Légendaire" # Chance brute en plus
+                                    if is_leg or random.randint(1, 50) == 1: rarete_finale = "Légendaire"
                                     elif bst >= 550: rarete_finale = "Ultra Rare"
                                     elif bst >= 450: rarete_finale = "Super Rare"
                                     elif bst >= 350: rarete_finale = "Rare"
@@ -625,6 +634,20 @@ elif mode_choisi == "🎰 Portail d'Invocation (Gacha)":
                                     elif bst >= 400: rarete_finale = "Rare"
                                     elif bst >= 300: rarete_finale = "Peu Commun"
                                     else: rarete_finale = "Commun"
+
+                                # ==========================================
+                                # 🌟 LOGIQUE SHINY SÉLECTIVE ✨
+                                # ==========================================
+                                # On n'applique le test que si c'est un Légendaire OU un Évolué
+                                if is_leg or is_evolved:
+                                    # Ici : 1 chance sur 20 (5% de chance). Tu peux changer le 20 pour ajuster la rareté !
+                                    if random.randint(1, 50) == 1:
+                                        rarete_finale = "Shiny ✨"
+                                        # On remplace l'image normale par l'artwork officiel Shiny !
+                                        img_src = d_pkmn["sprites"]["other"]["official-artwork"]["shiny"] or d_pkmn["sprites"]["front_shiny"] or img_src
+                                        # On change son nom pour créer une carte unique dans la base de données
+                                        nom_tire = f"{nom_tire} ✨"
+
                             except:
                                 nom_tire = "Erreur Pokémon"; img_src = ""; rarete_finale = "Commun"
 
@@ -691,7 +714,7 @@ elif mode_choisi == "🗂️ Mon Classeur (Collection)":
                             
                         cartes.append((u, n, i))
     
-    ordre = {"Légendaire": 1, "Ultra Rare": 2, "Super Rare": 3, "Rare": 4, "Peu Commun": 5, "Commun": 6}
+    ordre = {"Shiny ✨": 0, "Légendaire": 1, "Ultra Rare": 2, "Super Rare": 3, "Rare": 4, "Peu Commun": 5, "Commun": 6}
     cartes.sort(key=lambda x: (ordre.get(x[2].get("rarete", "Commun"), 7), x[1]))
     
     if not cartes:
